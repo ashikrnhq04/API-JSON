@@ -14,17 +14,18 @@ require CORE_PATH .  "Router.php";
 
 $router = new Router();
 
-spl_autoload_register(function ($class) {
-    dd($class);
-});
 
 
 
-require CORE_PATH .  "routes.php";
+
+require BASE_PATH .  "routes.php";
 
 $method = $_SERVER["_method"] ?? $_SERVER["REQUEST_METHOD"];
+$uri = $_SERVER["REQUEST_URI"]; 
 
-$router->route($_SERVER["REQUEST_URI"], $method);
+
+
+$router->route($uri, $method);
 
 
 

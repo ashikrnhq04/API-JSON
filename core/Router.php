@@ -36,15 +36,29 @@ class Router {
 
     public function route(string $uri, string $method) {
 
-        
-        foreach($this->routes as $route){
-            if($route["uri"] === $uri && $route["method"] === strtoupper($method)) {
+        $uri = preg_replace("#/$#", "", $uri);
+
+        foreach ($this->routes as $route) {
+
+            // replace dynamic slug with actual url part
+            $pattern = preg_replace('#:([\w]+)#', '([^/]+)', $route['uri']);
+            $pattern = "#^" . $pattern . "$#";
+
+            
+
+            if (preg_match($pattern, $uri, $matches) && $route['method'] === strtoupper($method)) {
+
+                // remove full match
+                array_shift($matches);
+                
+                // extract the slag
+                $slug  = $matches;
+                
                 return require VIEW_PATH . $route['controller'];
             }
-        };
-        
+        }
+    
         $this->abort();
-
     }
 
     public function abort($status = 404) {
