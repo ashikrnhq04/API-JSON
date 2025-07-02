@@ -1,5 +1,4 @@
-<?php 
-
-echo "Opps! 404 not found!";
+<?php
+echo"Opps! 404 not found." 
 
 ?>
