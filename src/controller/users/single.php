@@ -1,12 +1,8 @@
 <?php
 
-use classes\Database; 
+use src\Core\App; 
 
-$dbconfig = require(BASE_PATH . "config.php");
-
-$db = new Database($dbconfig['database'], 'root', 'phpmyadmin');
-
-dd($_SERVER['REQUEST_URI']);
+$db = App::resolve("database");
 
 $data = $db->query("select * from users where username = :username", [
     'username' => "ashik",

@@ -1,53 +1,48 @@
-<?php
+<?php 
 
 namespace src\Core;
 
+use src\Core\Validator;
+
 class Requests {
 
-    private $data; 
-    private $error = []; 
+    private array $data;
+    
+    private ?Validator $validator = null;
 
-    public function __construct() {
-
+    public function __construct()
+    {
         $contentType = $_SERVER['CONTENT_TYPE'] ?? "";
+        $raw = file_get_contents('php://input');
 
-        if(stripos($contentType, 'application/json') !== false) {
-            $raw = file_get_contents('php://input'); 
-            $this->data = json_decode($raw, true);
-        } else {
-            $this->data = $_POST;
-        }
-
-        foreach ($this->data as $key => $value) {
-            if (h($value) === '') {
-                $this->errors[$key] = "{$key} is required";
-            }
-        }
+        $this->data = stripos($contentType, 'application/json') !== false
+            ? json_decode($raw, true)
+            : $_POST;
     }
 
-    public function input($key, $default = []): array {
-        $this->errors($key);
-        return $this->data[$key] ?? $default; 
-    }
-
-    public function all(): array {
+    public function all(): array
+    {
         return $this->data;
     }
 
-    public function errors(string $key = '') {
-
-        if ($key !== '' && isset($this->errors[$key])) {
-            return $this->errors[$key];
-        }
-    
-        return $this->errors ?? [];
+    public function validate(array $rules): self
+    {
+        $this->validator = new Validator($this->data, $rules);
+        return $this;
     }
 
-    public function hasError(): bool {
-        return !empty($this->errors);
+    public function fails(): bool
+    {
+        return !$this->validator?->passes();
     }
 
-    public static function make() {
+    public function errors(): array
+    {
+        return $this->validator?->errors() ?? [];
+    }
+
+    public static function make(): self
+    {
         return new self();
     }
 }

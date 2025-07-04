@@ -6,8 +6,8 @@ header('Access-Control-Allow-Origin: *');
 $response = [
     "description" => "Single user data API endpoint",
     'version' => "1.0.0",
-    "ok" => count($data) > 0 ? true : false,
-    "status" => count($data) > 0 ? "success" : "error",
+    "ok" => true,
+    "status" => "success",
     "data" => $data,
 ];
 

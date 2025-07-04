@@ -9,10 +9,13 @@ use src\Core\Database;
 $container = new Container();
 
 
-$container->bind("database", function() {
 
-        $dbconfig = require "config.php";
-        return new Database($dbconfig["database"], "root", "phpmyadmin");     
+
+$container->bind("src\Core\Database", function() {
+    
+    $dbconfig = require "config.php";
+    
+    return new Database($dbconfig["database"], "root", "phpmyadmin");
             
 }); 
 
