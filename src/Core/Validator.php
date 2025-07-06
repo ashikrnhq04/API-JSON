@@ -23,37 +23,54 @@ class Validator
 
             foreach ($rules as $rule) {
                 if ($rule === 'required' && empty($value)) {
-                    $this->errors[$field][] = "{$field} is required.";
+                    if(!isset($this->errors[$field])) {
+                        $this->errors[$field][] = "{$field} is required.";
+                    }
                 }
 
                 if ($rule === 'string' && !is_string($value)) {
-                    $this->errors[$field][] = "{$field} must be a string.";
+                    if(!iseet($this->errors[$field])) {
+                        $this->errors[$field][] = "{$field} must be a string.";
+                    }
                 }
 
                 if ($rule === 'number' && !is_numeric($value)) {
-                    $this->errors[$field][] = "{$field} must be numeric.";
+                    if(!isset($this->errors[$field])) {
+                        $this->errors[$field][] = "{$field} must be numeric.";
+                    }
                 }
 
                 if ($rule === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                    $this->errors[$field][] = "{$field} must be a valid email address.";
+                    if(!isset($this->errors[$field])) {
+                        $this->errors[$field][] = "{$field} must be a valid email address.";
+                    }
                 }
 
                 if ($rule === 'url' && !filter_var($value, FILTER_VALIDATE_URL)) {
-                    $this->errors[$field][] = "{$field} must be a valid URL.";
+                    if(!isset($this->errors[$field])) {
+                        $this->errors[$field][] = "{$field} must be a valid URL.";
+                    }
                 }
 
                 if($rule === 'float' && !is_float($value) && !is_numeric($value)) {
-                    $this->errors[$field][] = "{$field} must be a float.";
+                    if(!isset($this->errors[$field])) {
+                        $this->errors[$field][] = "{$field} must be a float.";
+                    }
                 }
 
-                if($tule === 'boolean' && !is_bool($value) && !in_array($value, ['true', 'false', 1, 0], true)) {
-                    $this->errors[$field][] = "{$field} must be a boolean.";
+                if($rule === 'boolean' && !is_bool($value) && !in_array($value, ['true', 'false', 1, 0], true)) {
+                    if(!isset($this->errors[$field])) {
+                        $this->errors[$field][] = "{$field} must be a boolean.";
+                    }
+                    
                 }
 
                 if (str_starts_with($rule, 'max:')) {
                     $max = (int) explode(':', $rule)[1];
                     if (is_string($value) && mb_strlen($value) > $max) {
-                        $this->errors[$field][] = "{$field} must not exceed {$max} characters.";
+                        if(!isset($this->errors[$field])) {
+                            $this->errors[$field][] = "{$field} must not exceed {$max} characters.";
+                        }
                     }
                 }
 

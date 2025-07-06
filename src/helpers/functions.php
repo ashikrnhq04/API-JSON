@@ -65,14 +65,16 @@ function toSlug($str): string {
 
 function abort($statusCode = 500, array $error) {
     http_response_code($statusCode);
-
     // actual server side/script error
-    error_log($error["error"]?->getMessage() . " " . $error["error"]?->getCode());
+    if(isset($error["serverError"]) && $error["serverError"] instanceof \Throwable) {
 
-    // human readable error to appear in front-end
-    
-    $error["message"] = $error["message"] ?? "An error occurred";
-    
+        $serverError = $error["serverError"];
+
+        error_log($serverError->getMessage() . "\n" . $serverError->getTraceAsString());
+        unset($error["serverError"]);
+        
+    }
+
     controllerPath("error.php", [
         "error" => $error
     ]);

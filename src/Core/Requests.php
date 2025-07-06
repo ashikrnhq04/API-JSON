@@ -1,7 +1,6 @@
 <?php 
 
 namespace src\Core;
-
 use src\Core\Validator;
 
 class Requests {
@@ -15,14 +14,30 @@ class Requests {
         $contentType = $_SERVER['CONTENT_TYPE'] ?? "";
         $raw = file_get_contents('php://input');
 
-        $this->data = stripos($contentType, 'application/json') !== false
+        $input = stripos($contentType, 'application/json') !== false
             ? json_decode($raw, true)
             : $_POST;
+
+        try {
+            if(empty($input) || !is_array($input)) {
+                throw new \InvalidArgumentException("Input data must be a non-empty array.", 400);
+            }
+        } catch (\Exception $e) {
+            abort(400, [
+                "message" => "Invalid input data format.",
+                "serverError" => $e
+            ]);
+        }
+        
+        $this->data = array_intersect_key(
+            $input,
+            array_flip(['title', 'description', 'price', 'image', 'category'])
+        );
     }
 
     public function all(): array
     {
-        return $this->data;
+        return [...$this->data, 'url' => toSlug($this->data['title'] ?? '')];
     }
 
     public function validate(array $rules): self

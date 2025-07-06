@@ -80,4 +80,22 @@ class DBTools
     
     }
 
+    public function dropTable(string $tableName): bool
+    {
+        dbCheck($this->db, "Database connection is not established.");
+        
+        paramGuard($tableName, "string", "Table name cannot be empty.");
+
+        $sql = "DROP TABLE IF EXISTS `{$tableName}`";
+
+        try {
+            $this->db->query($sql);
+            $this->db->execute(); // Execute the query
+            return true;
+        } catch (\PDOException $e) {
+            error_log("Table drop failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
 }

@@ -53,6 +53,8 @@ class Database {
         }
 
         $this->statement->execute($param);
+
+
         
         return $this;
     }
@@ -60,14 +62,17 @@ class Database {
 
     public function insert(string $tableName, array $data) {
         
-        if (empty($tableName) || empty($data)) {
-            throw new \InvalidArgumentException("Table name and data cannot be empty.", 500);
-        }
+
+        paramGuard($tableName, "string", "Table name cannot be empty.");
+        
+        paramGuard($data, "array", "Data must be an array.");
+        
 
         $columns = implode(", ", array_keys($data));
         
-        if (empty($columns)) {
-            throw new \InvalidArgumentException("Data must contain at least one column.", 500);
+        // Ensure that the data array is not empty
+        if (empty($data)) {
+            throw new \InvalidArgumentException("Data array cannot be empty.", 500);
         }
 
         $placeholders = implode(", ", array_fill(0, count($data), '?'));
@@ -82,14 +87,8 @@ class Database {
 
     public function findAll(string $tablename, array $conditions = []) {
 
-        if (empty($tablename)) {
-            throw new \InvalidArgumentException("Table name cannot be empty.", 500);
-        }
+        paramGuard($tablename, "string", "Table name cannot be empty.");
         
-        if (!$this->connection) {
-            throw new \RuntimeException("Database connection is not established.", 500);
-        }
-
         $sql = "SELECT * FROM `{$tablename}`";
 
         // Prepare the SQL statement
@@ -102,28 +101,25 @@ class Database {
         return $this->statement->fetchAll();
     }
 
-    public function find(string $tableName, string|int $value) {
-        
-        if (empty($tableName) || empty($value)) {
-            throw new \InvalidArgumentException("Table name and value are required.", 500);
-        }
-    
-        if (!$this->connection) {
-            throw new \RuntimeException("Database connection is not established.", 500);
-        }
-        
-        $column = ctype_digit((string)$value) ? 'id' : 'url';
-    
-        $sql = "SELECT * FROM `{$tableName}` WHERE `{$column}` = :value";
-    
+    // find a single record with id or slug
+    public function find(string $tablename, string $slug) {
+
+        paramGuard($tablename, "string", "Table name cannot be empty.");
+
+        paramGuard($slug, "string", "Slug cannot be empty.");
+
+        $column = ctype_digit($slug) ? "id" : "slug";
+
+        $sql = "SELECT * FROM `{$tablename}` WHERE `{$column}` = :$column LIMIT 1";
+
         // Prepare the SQL statement
         $this->query($sql);
-        
-        // Bind the value to the parameter and execute
-        $this->execute(['value' => $value]);
 
-        // Fetch the result
-        return $this->statement->fetch();
+        // Execute the statement with the slug parameter
+        $this->execute([$column => $slug]);
+
+        // Fetch the single result or null
+        return $this->statement->fetch() ?? null; 
         
     }
     
@@ -144,4 +140,29 @@ class Database {
         
         return $this->statement->fetchAll();
     }   
+
+    public function select(string $tableName, array $columns = ["*"], array $conditions = []) {
+        
+        paramGuard($tableName, "string", "Table name cannot be empty.");
+        
+
+        $columnList = implode(", ", $columns);
+        
+        $sql = "SELECT {$columnList} FROM `{$tableName}`";
+
+        if (!empty($conditions)) {
+            $sql .= " WHERE " . implode(" AND ", array_map(function($key) {
+                return "`{$key}` = :{$key}";
+            }, array_keys($conditions)));
+        }
+        
+        $this->query($sql);
+        
+        return $this->execute($conditions)->fetchAll();
+        
+    }
+
+    public function lastInsertId() {
+        return $this->connection->lastInsertId();
+    }
 }
