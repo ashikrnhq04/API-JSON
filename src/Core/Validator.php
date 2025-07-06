@@ -77,7 +77,9 @@ class Validator
                 if (str_starts_with($rule, 'min:')) {
                     $min = (int) explode(':', $rule)[1];
                     if (is_string($value) && count(explode(" ", $value)) < $min) {
-                        $this->errors[$field][] = "{$field} must be at least {$min} words.";
+                        if(!isset($this->errors[$field])) {
+                            $this->errors[$field][] = "{$field} must be at least {$min} words.";
+                        }
                     }
                 }
             }

@@ -29,15 +29,12 @@ class Requests {
             ]);
         }
         
-        $this->data = array_intersect_key(
-            $input,
-            array_flip(['title', 'description', 'price', 'image', 'category'])
-        );
+        $this->data = $input; 
     }
 
     public function all(): array
     {
-        return [...$this->data, 'url' => toSlug($this->data['title'] ?? '')];
+        return $this->data;
     }
 
     public function validate(array $rules): self

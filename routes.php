@@ -12,7 +12,13 @@ $router->get("/api/v1/products/:slug", "products/single.php");
 $router->post("/api/v1/products", "products/create.php");
 
 // PATCH
-$router->patch("/api/v1/products/:slug", "products/single.php");
+$router->patch("/api/v1/products/:slug", "products/edit.php");
+
+
+// DELETE
+$router->delete("/api/v1/products/:slug", "products/destroy.php");
+
+
 
 // Product Create Form
 $router->get("/api/v1/productscreate", "productcreate.php");

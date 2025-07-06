@@ -1,6 +1,5 @@
 <?php 
 
-
 use src\Core\App; 
 use src\Core\Database; 
 use src\Core\DBTools; 
@@ -42,13 +41,13 @@ try {
 
 
     // extract categories to insert to the DB seperately
-    $categories = explode(",", $input["category"] ?? "");
+    $categories = explode(",", $input["categories"] ?? "");
 
 
     // catch and insert only the right data to product table
     $productData = ["title", "description", "image", "price", "url"];
 
-    $db->insert("products", array_intersect_key($input, array_flip($productData)));
+    $db->insert("products", array_intersect_key([...$input, 'url' => toSlug($input['title'])], array_flip($productData)));
 
     // get the last inserted product id
     $lastInsertedProductID = $db->lastInsertId();

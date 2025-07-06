@@ -60,29 +60,51 @@ class Database {
     }
 
 
-    public function insert(string $tableName, array $data) {
-        
-
-        paramGuard($tableName, "string", "Table name cannot be empty.");
-        
-        paramGuard($data, "array", "Data must be an array.");
-        
-
-        $columns = implode(", ", array_keys($data));
-        
-        // Ensure that the data array is not empty
-        if (empty($data)) {
-            throw new \InvalidArgumentException("Data array cannot be empty.", 500);
+    public function insert(string $table, array $data): self {
+        if (empty($table) || empty($data)) {
+            throw new \InvalidArgumentException("Table name and data cannot be empty.");
         }
 
-        $placeholders = implode(", ", array_fill(0, count($data), '?'));
+        $columns = implode(", ", array_keys($data));
+        $placeholders = ":" . implode(", :", array_keys($data));
         
-        $query = "INSERT INTO `$tableName` ($columns) VALUES ($placeholders)";
+        $sql = "INSERT INTO `{$table}` ({$columns}) VALUES ({$placeholders})";
         
-        $this->query($query);
-        
-        return $this->execute(array_values($data));
+        return $this->query($sql)->execute($data);
+    }
 
+    // delete data from a table single or multiple records
+    public function delete(string $table, array $conditions): int {
+        if (empty($table) || empty($conditions)) {
+            throw new \InvalidArgumentException("Table name and conditions cannot be empty.");
+        }
+
+        $whereClause = implode(" AND ", array_map(fn($key) => "`{$key}` = :{$key}", array_keys($conditions)));
+        $sql = "DELETE FROM `{$table}` WHERE {$whereClause}";
+
+        $this->query($sql)->execute($conditions);
+        return $this->statement->rowCount();
+    }
+    
+
+    public function update(string $table, array $data, array $conditions): int {
+        if (empty($table) || empty($data) || empty($conditions)) {
+            throw new \InvalidArgumentException("Table, data, and conditions cannot be empty.");
+        }
+
+        $setClause = implode(", ", array_map(fn($key) => "`{$key}` = :set_{$key}", array_keys($data)));
+        $whereClause = implode(" AND ", array_map(fn($key) => "`{$key}` = :where_{$key}", array_keys($conditions)));
+
+        $sql = "UPDATE `{$table}` SET {$setClause} WHERE {$whereClause}";
+
+        // Prefix parameters to avoid conflicts
+        $params = array_merge(
+            array_combine(array_map(fn($k) => "set_{$k}", array_keys($data)), $data),
+            array_combine(array_map(fn($k) => "where_{$k}", array_keys($conditions)), $conditions)
+        );
+
+        $this->query($sql)->execute($params);
+        return $this->statement->rowCount();
     }
 
     public function findAll(string $tablename, array $conditions = []) {
@@ -122,7 +144,19 @@ class Database {
         return $this->statement->fetch() ?? null; 
         
     }
-    
+
+    public function select(string $table, array $columns = ["*"], array $conditions = []): array {
+        $columnList = implode(", ", $columns);
+        $sql = "SELECT {$columnList} FROM `{$table}`";
+
+        if (!empty($conditions)) {
+            $whereClause = implode(" AND ", array_map(fn($key) => "`{$key}` = :{$key}", array_keys($conditions)));
+            $sql .= " WHERE {$whereClause}";
+        }
+        
+        return $this->query($sql)->execute($conditions)->fetchAll();
+    }
+
     public function fetch() {
         
         if (!$this->statement) {
@@ -140,27 +174,6 @@ class Database {
         
         return $this->statement->fetchAll();
     }   
-
-    public function select(string $tableName, array $columns = ["*"], array $conditions = []) {
-        
-        paramGuard($tableName, "string", "Table name cannot be empty.");
-        
-
-        $columnList = implode(", ", $columns);
-        
-        $sql = "SELECT {$columnList} FROM `{$tableName}`";
-
-        if (!empty($conditions)) {
-            $sql .= " WHERE " . implode(" AND ", array_map(function($key) {
-                return "`{$key}` = :{$key}";
-            }, array_keys($conditions)));
-        }
-        
-        $this->query($sql);
-        
-        return $this->execute($conditions)->fetchAll();
-        
-    }
 
     public function lastInsertId() {
         return $this->connection->lastInsertId();

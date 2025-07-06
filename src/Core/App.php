@@ -11,7 +11,7 @@ class App {
     }
 
     public static function getContainer() {
-        return static::container; 
+        return static::$container; 
     }
 
     public static function bind(string $key, callable $resolver) {

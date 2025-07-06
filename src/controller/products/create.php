@@ -7,8 +7,10 @@ $toBeValidated = [
     "description" => "required|string|min:5",
     "price" => "required|float",
     "image" => "required|url",
-    "category" => "string",
+    "categories" => "string",
 ];
+
+//
 
 $request = Requests::make()->validate($toBeValidated);
 
