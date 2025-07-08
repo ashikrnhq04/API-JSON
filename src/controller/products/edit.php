@@ -3,6 +3,7 @@
 require_once 'classes/BaseProductController.php';
 
 use src\Core\Requests;
+use src\Core\Router;
 
 class ProductEditController extends BaseProductController {
     
@@ -57,6 +58,7 @@ class ProductEditController extends BaseProductController {
         $allowedFields = ["title", "description", "image", "price"];
         
         $updateData = array_intersect_key($input, array_flip($allowedFields));
+        
         $updateData['url'] = toSlug($input['title']);
 
         $this->db->update("products", $updateData, ["id" => $productId]);
@@ -80,5 +82,9 @@ class ProductEditController extends BaseProductController {
     }
 }
 
+$routeSlug = new Router();
+
+$slug = $routeSlug->getSlug();
+
 $controller = new ProductEditController();
-$controller->update($slug);
+$controller->update($slug); 

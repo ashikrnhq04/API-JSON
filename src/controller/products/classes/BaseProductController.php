@@ -2,6 +2,8 @@
 
 use src\Core\App; 
 use src\Core\Database; 
+use src\Core\SchemaManager;
+use src\Core\Requests;
 
 abstract class BaseProductController {
     protected Database $db;
@@ -63,7 +65,7 @@ abstract class BaseProductController {
 
         $this->db->insert("categories", [
             "name" => $categoryName, 
-            "slug" => toSlug($categoryName)
+            "url" => toSlug($categoryName)
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -74,5 +76,28 @@ abstract class BaseProductController {
             "product_id" => $productId,
             "category_id" => $categoryId
         ]);
+    }
+
+    protected function handleTableOperations(): void { 
+        
+        try {
+            if(!$this->db->hasTable("products")) {
+                $this->db->createTable("products", SchemaManager::get("products"));
+            }
+
+            if(!$this->db->hasTable("categories")) {
+                $this->db->createTable("categories", SchemaManager::get("categories"));
+            }
+
+            if(!$this->db->hasTable("product_category")) {
+                $this->db->createTable("product_category", SchemaManager::get("product_category"));
+            }
+
+        } catch(\Exception $e) {
+            abort(500, [
+                "message" => "Database connection failed",
+                "serverError" => $e
+            ]);
+        }
     }
 }

@@ -5,6 +5,8 @@ namespace src\Core;
 class Router {
     protected $routes = []; 
 
+    protected static $slug; 
+
     public function add(string $method, string $uri, string $controller) {
 
         $this->routes[] = compact("method", "uri", "controller");
@@ -43,10 +45,7 @@ class Router {
 
         if($uri !== "/"){
             $uri = preg_replace("#/$#", "", $uri);
-        }
-
-
-        
+        }        
 
         // handle static URL 
         foreach ($this->routes as $route) {
@@ -62,13 +61,17 @@ class Router {
         
             if (preg_match($pattern, $uri, $matches) && $route['method'] === strtoupper($method)) {
                 array_shift($matches);
-                $slug = $matches[0] ?? null;
-                controllerPath($route['controller'], ["slug" => $slug]);
+                static::$slug = $matches[0] ?? null;
+                controllerPath($route['controller']);
                 return;
             }
         }
         
         $this->abort();
+    }
+
+    public static function getSlug() {
+        return static::$slug;
     }
 
     public function abort($status = 404) {

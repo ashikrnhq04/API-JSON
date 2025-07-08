@@ -28,8 +28,7 @@ class ProductIndexController extends BaseProductController {
                 FROM products p
                 LEFT JOIN product_category pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON c.id = pc.category_id 
-                GROUP BY p.id
-                ORDER BY p.created_at DESC"; 
+                GROUP BY p.id"; 
         
         $results = $this->db->query($sql)->execute()->fetchAll();
         

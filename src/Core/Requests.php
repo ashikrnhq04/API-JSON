@@ -12,6 +12,7 @@ class Requests {
     public function __construct()
     {
         $contentType = $_SERVER['CONTENT_TYPE'] ?? "";
+        
         $raw = file_get_contents('php://input');
 
         $input = stripos($contentType, 'application/json') !== false
@@ -29,7 +30,9 @@ class Requests {
             ]);
         }
         
-        $this->data = $input; 
+        $this->data = array_map(function($value) {
+            return is_string($value) ? h($value) : $value;
+        }, $input);
     }
 
     public function all(): array
