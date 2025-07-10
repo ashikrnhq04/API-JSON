@@ -1,0 +1,116 @@
+
+# Environment Configuration Files
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Dependency directories
+vendor/
+node_modules/
+bower_components/
+
+# Composer
+composer.lock
+composer.phar
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+storage/logs/
+/logs/
+
+# Cache directories
+cache/
+tmp/
+temp/
+storage/cache/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# Build artifacts
+build/
+dist/
+public/build/
+public/hot
+public/storage
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# PHP specific
+*.php~
+.phpunit.result.cache
+phpunit.xml
+
+# Database
+*.sqlite
+*.db
+*.sql
+database.sqlite
+
+# Configuration files that might contain sensitive data
+config/database.php
+config/app.php
+storage/app/
+storage/framework/
+bootstrap/cache/
+
+# NPM/Yarn
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Coverage reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Test files and directories
+tests/coverage/
+.phpunit.cache
+
+# Local development files
+.vagrant/
+Vagrantfile.local
+.homestead/
+Homestead.yaml
+Homestead.json
+
+# Asset compilation
+mix-manifest.json
+.mix
+
+# Temporary files
+*.tmp

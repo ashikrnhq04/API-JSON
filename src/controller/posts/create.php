@@ -5,15 +5,14 @@ use src\Core\App;
 use src\Core\Database; 
 use src\Core\SchemaManager;
 
-require_once "classes/BaseProductController.php";
+require_once "classes/BasePostController.php";
 
-class ProductSaveController extends BaseProductController {
+class PostSaveController extends BasePostController {
 
     protected $validationRules = [
         "title" => "required|string|min:2",
-        "description" => "required|string|min:5",
-        "price" => "required|float",
-        "image" => "required|url",
+        "content" => "required|string|min:5",
+        "image" => "url",
         "categories" => "string",
     ];
 
@@ -29,6 +28,8 @@ class ProductSaveController extends BaseProductController {
 
         $input = $request->all();
 
+        
+
         try {
             // Start transaction
             if (!$this->db->beginTransaction()) {
@@ -37,35 +38,40 @@ class ProductSaveController extends BaseProductController {
 
             // extract categories to insert to the DB seperately
             $categories = explode(",", $input["categories"] ?? "");
+            error_log("DEBUG: Input categories string: '" . ($input["categories"] ?? "null") . "'");
+            error_log("DEBUG: Exploded categories array: " . json_encode($categories));
 
-            // catch and insert only the right data to product table
-            $productData = ["title", "description", "image", "price", "url"];
+            
+            // catch and insert only the right data to posts table
+            $postData = ["title", "content", "image", "url"];
 
-            $this->db->insert("products", array_intersect_key([...$input, 'url' => toSlug($input['title'])], array_flip($productData)));
 
-            // get the last inserted product id
-            $productId = $this->db->lastInsertId();
-            if (empty($productId)) {
+            $this->db->insert("posts", array_intersect_key([...$input, 'url' => toSlug($input['title'])], array_flip($postData)));
+
+            // get the last inserted post id
+            $postId = $this->db->lastInsertId();
+
+            if (empty($postId)) {
                 $this->db->rollBack();
-                abort(500, ["message" => "Failed to save product"]);
+                abort(500, ["message" => "Failed to save the post"]);
             }
 
             
             // Handle categories
-            $this->handleCategoryOperations($productId, $categories ?? []);
+            $this->handleCategoryOperations($postId, $categories ?? []);
 
             // Commit transaction
             $this->db->commit();
 
             echo json_encode([
                 "status" => "success",
-                "message" => "Product saved successfully",
+                "message" => "Post saved successfully",
             ]);
             
         } catch (\Exception $e) {
             $this->db->rollBack();
             abort(500, [
-                "message" => "Failed to save product",
+                "message" => "Failed to save the post",
                 "serverError" => $e
             ]);
         }
@@ -73,5 +79,5 @@ class ProductSaveController extends BaseProductController {
 
 }
 
-$productSave = new ProductSaveController();
-$productSave->save();
+$postSave = new PostSaveController();
+$postSave->save();

@@ -6,7 +6,6 @@ class ProductDestroyController extends BaseProductController {
 
     public function destroy(string $slug): void {
         try {
-
             $column = ctype_digit($slug) ? "id" : "url";
             
             $product = $this->db->select("products", ["id"], [$column => $slug]);
@@ -16,8 +15,8 @@ class ProductDestroyController extends BaseProductController {
             }
             
             $productId = $product[0]["id"];
-            
-            // Start transaction
+
+            // start transaction
             if (!$this->db->beginTransaction()) {
                 throw new \Exception("Failed to start database transaction");
             }
@@ -27,7 +26,7 @@ class ProductDestroyController extends BaseProductController {
             
             // Delete the product
             $this->db->delete("products", ["id" => $productId]);
-            
+
             // Commit transaction
             $this->db->commit();
             

@@ -73,6 +73,7 @@
 
     .content {
         padding: 20px;
+        min-height: 100svh;
     }
     </style>
 </head>
@@ -83,7 +84,7 @@
                 href=" https://jsonplaceholder.typicode.com/">jsonplaceholder.com</a></h1>
     </header>
     <div class="content">
-        <p>All the REST methods are supported. Other than GET, all the operations are dummy.</p>
+        <p>All the REST methods are supported except PUT. Other than GET, all the operations are dummy.</p>
         <pre>Exmaple: <code>GET /api/v1/products</code></pre>
 
         <h3 style="margin: 20px 0px">Available endpoints:</h3>
@@ -93,9 +94,6 @@
             </li>
             <li><a href="/api/v1/posts">/api/v1/posts</a> - Get a list of posts</li>
             <li><a href="/api/v1/posts/{id}">/api/v1/posts/{id|slug}</a> - Get a single post by ID or Slug</li>
-            <li><a href="/api/v1/categories">/api/v1/categories</a> - Get a list of categories</li>
-            <li><a href="/api/v1/categories/{id}">/api/v1/categories/{id}</a> - Get a single category by ID or Slug
-            </li>
         </ul>
     </div>
 

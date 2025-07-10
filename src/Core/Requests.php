@@ -30,9 +30,7 @@ class Requests {
             ]);
         }
         
-        $this->data = array_map(function($value) {
-            return is_string($value) ? h($value) : $value;
-        }, $input);
+        $this->data = array_map('h', $input);
     }
 
     public function all(): array

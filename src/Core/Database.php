@@ -58,6 +58,7 @@ class Database {
 
 
     public function insert(string $table, array $data): self {
+
         if (empty($table) || empty($data)) {
             throw new \InvalidArgumentException("Table name and data cannot be empty.");
         }
@@ -243,4 +244,43 @@ class Database {
         return !empty($this->fetchAll());
 
     }   
+
+    // transaction support
+
+    public function beginTransaction(): bool {
+        try {
+            if ($this->connection->inTransaction()) {
+                throw new \RuntimeException("Transaction already active");
+            }
+            return $this->connection->beginTransaction();
+        } catch (\PDOException $e) {
+            throw new \RuntimeException("Failed to start transaction: " . $e->getMessage());
+        }
+    }
+
+    public function commit(): bool {
+        try {
+            if (!$this->connection->inTransaction()) {
+                throw new \RuntimeException("No active transaction to commit");
+            }
+            return $this->connection->commit();
+        } catch (\PDOException $e) {
+            throw new \RuntimeException("Failed to commit transaction: " . $e->getMessage());
+        }
+    }
+
+    public function rollBack(): bool {
+        if(!$this->inTransaction()) {
+            throw new \RuntimeException("Cannot roll back a transaction that is not active.");
+        }
+        try { 
+            return $this->connection->rollBack();
+        } catch (\PDOException $e) {
+            throw new \RuntimeException("Failed to rollback transaction: " . $e->getMessage());
+        }
+    }
+
+    public function inTransaction(): bool {
+        return $this->connection->inTransaction();
+    }
 }
