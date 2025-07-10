@@ -31,15 +31,9 @@ class PostSaveController extends BasePostController {
         
 
         try {
-            // Start transaction
-            if (!$this->db->beginTransaction()) {
-                throw new \Exception("Failed to start database transaction");
-            }
 
             // extract categories to insert to the DB seperately
             $categories = explode(",", $input["categories"] ?? "");
-            error_log("DEBUG: Input categories string: '" . ($input["categories"] ?? "null") . "'");
-            error_log("DEBUG: Exploded categories array: " . json_encode($categories));
 
             
             // catch and insert only the right data to posts table
@@ -52,16 +46,12 @@ class PostSaveController extends BasePostController {
             $postId = $this->db->lastInsertId();
 
             if (empty($postId)) {
-                $this->db->rollBack();
                 abort(500, ["message" => "Failed to save the post"]);
             }
 
             
             // Handle categories
             $this->handleCategoryOperations($postId, $categories ?? []);
-
-            // Commit transaction
-            $this->db->commit();
 
             echo json_encode([
                 "status" => "success",
