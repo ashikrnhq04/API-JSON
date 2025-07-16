@@ -66,13 +66,16 @@ class PostEditController extends BasePostController {
     }
 
     private function updatePost(int $postId, array $input): void {
-        $allowedFields = ["title", "description", "image", "price"];
+        $allowedFields = ["title", "content", "image", "price"];
         
         $updateData = array_intersect_key($input, array_flip($allowedFields));
         
         $updateData['url'] = toSlug($input['title']);
 
-        $this->db->update("posts", $updateData, ["id" => $postId]);
+
+        $this->db->query(
+            "UPDATE posts SET title = :title, content = :content, image = :image, url = :url WHERE id = :id"
+        )->execute($updateData + ['id' => $postId]);
     }
 
     private function updatePostCategories(int $postId, string $categoriesString): void {

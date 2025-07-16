@@ -5,7 +5,7 @@ header('Access-Control-Allow-Origin: *');
 
 $response = [
     "description" => "Users endpoint API to fetch all the users data.",
-    "version" => "1.0.0",
+    "version" => $_ENV["APP_VERSION"] ?? "1.0.0",
     "data" => $data
 ];
 

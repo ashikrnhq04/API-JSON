@@ -39,6 +39,10 @@ class PostSaveController extends BasePostController {
             // catch and insert only the right data to posts table
             $postData = ["title", "content", "image", "url"];
 
+            if (!$this->db->beginTransaction()) {
+                throw new \Exception("Failed to start database transaction");
+            }
+
 
             $this->db->insert("posts", array_intersect_key([...$input, 'url' => toSlug($input['title'])], array_flip($postData)));
 
@@ -52,6 +56,9 @@ class PostSaveController extends BasePostController {
             
             // Handle categories
             $this->handleCategoryOperations($postId, $categories ?? []);
+
+            // Commit transaction
+            $this->db->commit();
 
             echo json_encode([
                 "status" => "success",

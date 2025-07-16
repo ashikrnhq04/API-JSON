@@ -11,6 +11,7 @@ class Container {
     }
 
     public function resolve(string $key){
+        
         if(!array_key_exists($key, $this->bindings)) {
             throw new \Exception("No binding found for the {$key}");
         }

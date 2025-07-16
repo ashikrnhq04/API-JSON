@@ -30,16 +30,30 @@ class ProductSaveController extends BaseProductController {
         $input = $request->all();
 
         try {
+          
+
+            // extract categories to insert to the DB seperately
+            $categories = explode(",", $input["categories"] ?? "");
+            
+            // catch and insert only the right data to product table
+            $productData = ["title", "description", "image", "price", "url"];
+            
+            if($_ENV["APP_ENV"] === "production") {
+                
+                if(isset())
+                echo json_encode([
+                    "status" => "success",
+                    "message" => "Product saved successfully",
+                ]);
+                
+            }
+            
+            
             // Start transaction
             if (!$this->db->beginTransaction()) {
                 throw new \Exception("Failed to start database transaction");
             }
 
-            // extract categories to insert to the DB seperately
-            $categories = explode(",", $input["categories"] ?? "");
-
-            // catch and insert only the right data to product table
-            $productData = ["title", "description", "image", "price", "url"];
 
             $this->db->insert("products", array_intersect_key([...$input, 'url' => toSlug($input['title'])], array_flip($productData)));
 

@@ -25,16 +25,12 @@ class SingleProductController extends BaseProductController {
     public function single() {
         try {
             $this->data = $this->getProduct();
-            if (empty($this->data)) {
-                abort(404, [
-                    "message" => "Product not found"
-                ]);
-            }
 
             viewsPath("products/single.view.php", [
                 "data" => $this->data,
                 "error" => $this->error
             ]);
+            
         } catch (Exception $e) {
             abort(500, [
                 "message" => "Failed to fetch product",
@@ -56,9 +52,10 @@ class SingleProductController extends BaseProductController {
 
             $result = $this->db->query($sql)->execute([$column => $this->slug])->fetch();
 
+            
             return $result ? array_merge($result, [
                 'categories' => isset($result['categories']) && $result['categories'] !== null
-                    ? array_map('trim', explode(',', $result['categories']))
+                    ? array_map('h', explode(',', $result['categories']))
                     : []
             ]) : [];
             

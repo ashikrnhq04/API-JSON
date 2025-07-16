@@ -7,6 +7,7 @@ use src\Core\Router;
 
 $container = new Container();
 
+
 $container->bind("src\Core\Database", function() {
     
     $dbconfig = require "config.php";

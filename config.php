@@ -1,8 +1,9 @@
 <?php
 
+
 return [
     "database" => [
-        "dbname" => $_ENV["DB_NAME"] ?? "test_db",
+        "dbname" => $_ENV["DB_NAME"],
         "host" => $_ENV["DB_HOST"] ?? "localhost",
         "port" => $_ENV["DB_PORT"] ?? 3306,
         "charset" => $_ENV["DB_CHARSET"] ?? "utf8mb4",

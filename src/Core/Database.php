@@ -72,7 +72,7 @@ class Database {
     }
 
     // delete data from a table single or multiple records
-    public function delete(string $table, array $conditions): int {
+    public function delete(string $table, array $conditions ): int {
         if (empty($table) || empty($conditions)) {
             throw new \InvalidArgumentException("Table name and conditions cannot be empty.");
         }
@@ -85,79 +85,67 @@ class Database {
     }
     
 
-    public function update(string $table, array $data, array $conditions): int {
-        if (empty($table) || empty($data) || empty($conditions)) {
-            throw new \InvalidArgumentException("Table, data, and conditions cannot be empty.");
-        }
-    
-        $setClause = implode(", ", array_map(fn($key) => "`{$key}` = :set_{$key}", array_keys($data)));
-        $whereClause = implode(" AND ", array_map(fn($key) => "`{$key}` = :where_{$key}", array_keys($conditions)));
-    
-        $sql = "UPDATE `{$table}` SET {$setClause} WHERE {$whereClause}";
-    
-        // Prefix parameters to avoid conflicts
-        $params = array_merge(
-            array_combine(array_map(fn($k) => "set_{$k}", array_keys($data)), $data),
-            array_combine(array_map(fn($k) => "where_{$k}", array_keys($conditions)), $conditions)
-        );        
-    
-        $this->query($sql)->execute($params);
-        return $this->statement->rowCount();
-    }
+    public function findAll() {
 
-    public function findAll(string $tablename, array $conditions = []) {
-
-        paramGuard($tablename, "string", "Table name cannot be empty.");
-        
-        $sql = "SELECT * FROM `{$tablename}`";
-
-        if(!empty($conditions)) {
-            $whereClause = implode(" AND ", array_map(fn($key) => "`{$key}` = :{$key}", array_keys($conditions)));
-            $sql .= " WHERE {$whereClause}";
+        if (!$this->statement) {
+            throw new \RuntimeException("No query has been executed.", 500);
         }
 
-        // Prepare the SQL statement
-        $this->query($sql);
+        // Check if the statement is prepared
+        if (!$this->statement instanceof \PDOStatement) {
+            throw new \RuntimeException("Query has not been prepared.", 500);
+        }
 
-        // Execute the statement
-        $this->execute($conditions);
+        // Check if the statement is executed
+        if (!$this->statement->execute()) {
+            throw new \RuntimeException("Query execution failed.", 500);
+        }
 
         // Fetch all results
-        return $this->statement->fetchAll();
+        return $this->statement->fetchAll() ?? null;
     }
 
     // find a single record with id or slug
-    public function find(string $tablename, string $slug) {
+    public function find() {
 
-        paramGuard($tablename, "string", "Table name cannot be empty.");
+        if (!$this->statement) {
+            throw new \RuntimeException("No query has been executed.", 500);
+        }
+        
+        // Check if the statement is prepared
+        if (!$this->statement instanceof \PDOStatement) {
+            throw new \RuntimeException("Query has not been prepared.", 500);
+        }
 
-        paramGuard($slug, "string", "Slug cannot be empty.");
-
-        $column = ctype_digit($slug) ? "id" : "url";
-
-        $sql = "SELECT * FROM `{$tablename}` WHERE `{$column}` = :$column LIMIT 1";
-
-        // Prepare the SQL statement
-        $this->query($sql);
-
-        // Execute the statement with the slug parameter
-        $this->execute([$column => $slug]);
-
+        // Check if the statement is executed
+        if (!$this->statement->execute()) {
+            throw new \RuntimeException("Query execution failed.", 500);
+        }
+        
         // Fetch the single result or null
         return $this->statement->fetch() ?? null; 
         
     }
 
-    public function select(string $table, array $columns = ["*"], array $conditions = []): array {
-        $columnList = implode(", ", $columns);
-        $sql = "SELECT {$columnList} FROM `{$table}`";
+    public function select(string $table, array $columns = ["*"], array $conditions = []): ? array {
+        
+        if (empty($table)) {
+            throw new \InvalidArgumentException("Table name cannot be empty.");
+        }
 
-        if (!empty($conditions)) {
+        $columnsSql = implode(", ", array_map(fn($col) => "`{$col}`", $columns));
+
+        if (empty($conditions)) {
+            $sql = "SELECT {$columnsSql} FROM `{$table}`";
+        } else {
             $whereClause = implode(" AND ", array_map(fn($key) => "`{$key}` = :{$key}", array_keys($conditions)));
-            $sql .= " WHERE {$whereClause}";
+            
+            $sql = "SELECT {$columnsSql} FROM `{$table}` WHERE {$whereClause}";
         }
         
-        return $this->query($sql)->execute($conditions)->fetchAll();
+        $this->query($sql)->execute($conditions);
+
+        return (array) $this->fetch() ?? null;
     }
 
     public function fetch() {
@@ -166,13 +154,25 @@ class Database {
             throw new \RuntimeException("No query has been executed.", 500);
         }
         
+        // Check if the statement is prepared
+        if (!$this->statement instanceof \PDOStatement) {
+            throw new \RuntimeException("Query has not been prepared.", 500);
+        }
+
         return $this->statement->fetch();
     }
 
     public function fetchAll() {
         
+        // check query execution
         if (!$this->statement) {
             throw new \RuntimeException("No query has been executed.", 500);
+        }
+
+        // Check statement prepared
+        
+        if (!$this->statement instanceof \PDOStatement) {
+            throw new \RuntimeException("Query has not been prepared.", 500);
         }
         
         return $this->statement->fetchAll();

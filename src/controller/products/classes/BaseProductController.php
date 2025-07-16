@@ -60,7 +60,7 @@ abstract class BaseProductController {
         $existingCategory = $this->db->select("categories", ["id"], ["name" => $categoryName]);
 
         if ($existingCategory) {
-            return $existingCategory[0]["id"];
+            return $existingCategory["id"];
         }
 
         $this->db->insert("categories", [
