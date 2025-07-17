@@ -16,7 +16,7 @@ abstract class BaseProductController {
         } catch(\Exception $e) {
             abort(500, [
                 "message" => "Database connection failed",
-                "error" => $e
+                "serverError" => $e
             ]);
         }
     }
@@ -45,22 +45,40 @@ abstract class BaseProductController {
     }
 
     protected function handleCategoryOperations(int $productId, array $categories): void {
-        if (empty($categories)) return;
-
-        foreach ($categories as $categoryName) {
-            $categoryName = trim($categoryName);
-            if (empty($categoryName)) continue;
-
-            $categoryId = $this->getOrCreateCategory($categoryName);
-            $this->linkProductToCategory($productId, $categoryId);
+        
+        if (empty($categories)) {
+            return;
         }
+
+        foreach ($categories as $index => $categoryName) {
+            $categoryName = trim($categoryName);
+            
+            if (empty($categoryName)) {
+                continue;
+            }
+
+            try {
+                $categoryId = $this->getOrCreateCategory($categoryName);
+                
+                $this->linkProductToCategory($productId, $categoryId);
+            } catch (\Exception $e) {
+                 abort(500, [
+                    "message" => "Failed to process category '$categoryName'",
+                    "serverError" => $e
+                ]);
+            }
+        }
+        
     }
 
-    protected function getOrCreateCategory(string $categoryName): int | null{
-        $existingCategory = $this->db->find('categories', $categoryName);
+    protected function getOrCreateCategory(string $categoryName): int {
+        
+        // Use select method instead of find to search by name
+        $existingCategory = $this->db->select("categories", ["id"], ["name" => $categoryName]);
 
         if (!empty($existingCategory)) {
-            return $existingCategory["id"];
+
+            return (int) $existingCategory[0]["id"];
         }
 
         $this->db->insert("categories", [
@@ -72,17 +90,27 @@ abstract class BaseProductController {
     }
 
     protected function linkProductToCategory(int $productId, int $categoryId): void {
+        
         // Check if the relationship already exists
         $existing = $this->db->select("product_category", ["product_id"], [
             "product_id" => $productId,
             "category_id" => $categoryId
         ]);
 
+        if (!empty($existing)) {
+            return;
+        }
+
         // Only insert if the relationship doesn't exist
-        if (empty($existing)) {
+        try {
             $this->db->insert("product_category", [
                 "product_id" => $productId,
                 "category_id" => $categoryId
+            ]);
+        } catch (\Exception $e) {
+            abort(500, [
+                "message" => "Failed to create link between product and category",
+                "serverError" => $e
             ]);
         }
     }

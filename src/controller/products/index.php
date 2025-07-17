@@ -38,6 +38,7 @@ class ProductIndexController extends BaseProductController {
                 ? explode(', ', $product['categories']) 
                 : [];
         }
+
         
         return $results;
     }

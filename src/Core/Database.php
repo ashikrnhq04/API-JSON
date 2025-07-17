@@ -121,7 +121,7 @@ class Database {
         return $this->fetch();
     }
 
-    public function select(string $table, array $columns = ["*"], array $conditions = []): ? array {
+    public function select(string $table, array $columns = ["*"], array $conditions = []): array {
         
         if (empty($table)) {
             throw new \InvalidArgumentException("Table name cannot be empty.");
@@ -139,7 +139,7 @@ class Database {
         
         $this->query($sql)->execute($conditions);
 
-        return (array) $this->fetch() ?? null;
+        return $this->fetchAll() ?? [];
     }
 
     public function fetch() {

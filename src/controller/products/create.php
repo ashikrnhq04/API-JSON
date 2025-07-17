@@ -42,7 +42,8 @@ class ProductSaveController extends BaseProductController {
         try {
             // extract categories to insert to the DB seperately
             $categories = explode(",", $input["categories"] ?? "");
-            
+          
+
             // catch and insert only the right data to product table
             $productData = ["title", "description", "image", "price", "url"];
             
@@ -50,7 +51,6 @@ class ProductSaveController extends BaseProductController {
             // Start transaction
             if (!$this->db->beginTransaction()) {
                 throw new \Exception("Failed to start database transaction");
-                exit;
             }
 
             $this->handleTableOperations();
@@ -59,15 +59,12 @@ class ProductSaveController extends BaseProductController {
 
             // get the last inserted product id
             $productId = $this->db->lastInsertId();
+            
             if (empty($productId)) {
-                $this->db->rollBack();
-                abort(500, ["message" => "Failed to save product"]);
+                throw new \Exception("Failed to get product ID");
             }
 
-            
-            // Handle categories
-            $this->handleCategoryOperations($productId, $categories ?? []);
-
+           
             // Commit transaction
             $this->db->commit();
 
