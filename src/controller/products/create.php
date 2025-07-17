@@ -40,8 +40,6 @@ class ProductSaveController extends BaseProductController {
         }
 
         try {
-          
-
             // extract categories to insert to the DB seperately
             $categories = explode(",", $input["categories"] ?? "");
             

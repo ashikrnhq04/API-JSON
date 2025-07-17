@@ -106,7 +106,7 @@ class Database {
     }
 
     // find a single record with id or slug
-    public function find(string $table, string $identifier): ?array {
+    public function find(string $table, string $identifier): array | bool {
         if (empty($table) || empty($identifier)) {
             throw new \InvalidArgumentException("Table and identifier cannot be empty.");
         }
