@@ -64,6 +64,7 @@ class ProductSaveController extends BaseProductController {
                 throw new \Exception("Failed to get product ID");
             }
 
+            $this->handleCategoryOperations($productId, $categories);
            
             // Commit transaction
             $this->db->commit();
