@@ -5,7 +5,7 @@ use src\Core\App;
 use src\Core\Database; 
 use src\Core\SchemaManager;
 
-require_once "classes/BasePostController.php";
+require_once "./classes/BasePostController.php";
 
 class PostSaveController extends BasePostController {
 
@@ -28,12 +28,19 @@ class PostSaveController extends BasePostController {
 
         $input = $request->all();
 
-        
+        // mimic the create post operation
+        if($_ENV["APP_ENV"] === "production") {
+            echo json_encode([
+                "status" => "success",
+                "message" => "Post saved successfully",
+            ]);
+            return;
+        } 
 
         try {
 
             // extract categories to insert to the DB seperately
-            $categories = explode(",", $input["categories"] ?? "");
+            $categories = isset($input["categories"]) ? explode(",", $input["categories"]) : [];
 
             
             // catch and insert only the right data to posts table

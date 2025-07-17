@@ -19,15 +19,25 @@ class ProductSaveController extends BaseProductController {
 
     public function save(): void {
         $request = Requests::make()->validate($this->validationRules);
+        
         if ($request->fails()) {
             abort(400, [
                 "message" => $request->errors()
             ]);
         }
 
-        $this->handleTableOperations();
 
         $input = $request->all();
+
+        if($_ENV["APP_ENV"] === "production") {
+
+            echo json_encode([
+                "status" => "success",
+                "message" => "Product saved successfully",
+            ]);
+            return;
+                
+        }
 
         try {
           
@@ -38,22 +48,14 @@ class ProductSaveController extends BaseProductController {
             // catch and insert only the right data to product table
             $productData = ["title", "description", "image", "price", "url"];
             
-            if($_ENV["APP_ENV"] === "production") {
-                
-                if(isset())
-                echo json_encode([
-                    "status" => "success",
-                    "message" => "Product saved successfully",
-                ]);
-                
-            }
-            
             
             // Start transaction
             if (!$this->db->beginTransaction()) {
                 throw new \Exception("Failed to start database transaction");
+                exit;
             }
 
+            $this->handleTableOperations();
 
             $this->db->insert("products", array_intersect_key([...$input, 'url' => toSlug($input['title'])], array_flip($productData)));
 

@@ -56,10 +56,12 @@ abstract class BaseProductController {
         }
     }
 
-    protected function getOrCreateCategory(string $categoryName): int {
-        $existingCategory = $this->db->select("categories", ["id"], ["name" => $categoryName]);
+    protected function getOrCreateCategory(string $categoryName): int | null{
+        $existingCategory = $this->db->find('categories', $categoryName);
 
-        if ($existingCategory) {
+        dd($existingCategory);
+
+        if (!empty($existingCategory)) {
             return $existingCategory["id"];
         }
 

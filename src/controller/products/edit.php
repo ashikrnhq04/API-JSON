@@ -96,4 +96,4 @@ $routeSlug = new Router();
 $slug = $routeSlug->getSlug();
 
 $controller = new ProductEditController();
-$controller->update($slug); 
+$controller->update($slug);

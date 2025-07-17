@@ -106,25 +106,19 @@ class Database {
     }
 
     // find a single record with id or slug
-    public function find() {
-
-        if (!$this->statement) {
-            throw new \RuntimeException("No query has been executed.", 500);
-        }
-        
-        // Check if the statement is prepared
-        if (!$this->statement instanceof \PDOStatement) {
-            throw new \RuntimeException("Query has not been prepared.", 500);
+    public function find(string $table, string $identifier): ?array {
+        if (empty($table) || empty($identifier)) {
+            throw new \InvalidArgumentException("Table and identifier cannot be empty.");
         }
 
-        // Check if the statement is executed
-        if (!$this->statement->execute()) {
-            throw new \RuntimeException("Query execution failed.", 500);
-        }
+        // Determine if identifier is numeric (ID) or name
+        $column = ctype_digit($identifier) ? "id" : "url";
         
-        // Fetch the single result or null
-        return $this->statement->fetch() ?? null; 
+        $sql = "SELECT * FROM `{$table}` WHERE `{$column}` = :{$column} LIMIT 1";
         
+        $this->query($sql)->execute([$column => $identifier]);
+        
+        return $this->fetch();
     }
 
     public function select(string $table, array $columns = ["*"], array $conditions = []): ? array {
