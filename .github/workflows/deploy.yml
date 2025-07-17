@@ -1,0 +1,33 @@
+name: Deploy to cPanel  
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: FTP Deployment
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Check out the repository
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 🔧 Install git-ftp
+      run: |
+        sudo apt-get update
+        sudo apt-get install git-ftp
+    - name: Deploy to cPanel
+      uses: ashikrnhq04/SFTP-Action-cPanel@master
+      with:
+        host: ${{ secrets.HOST }}
+        port: 21
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        target: 'mocker/' # Adjust based on your server's directory
+      env:
+        FTP_TIMEOUT: 1000
