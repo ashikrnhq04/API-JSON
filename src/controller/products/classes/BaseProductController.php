@@ -63,7 +63,7 @@ abstract class BaseProductController {
                 $this->linkProductToCategory($productId, $categoryId);
             } catch (\Exception $e) {
                  abort(500, [
-                    "message" => "Failed to process category '$categoryName'",
+                    "message" => "Failed to process category '{$categoryName}'",
                     "serverError" => $e
                 ]);
             }

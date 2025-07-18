@@ -60,10 +60,8 @@ abstract class BasePostController {
     protected function getOrCreateCategory(string $categoryName): int {
         $existingCategory = $this->db->select("categories", ["id"], ["name" => $categoryName]);
 
-
-        
         if (!empty($existingCategory)) {
-            return $existingCategory["id"];
+            return (int) $existingCategory[0]["id"];
         }
         
 

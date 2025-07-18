@@ -5,7 +5,7 @@ use src\Core\App;
 use src\Core\Database; 
 use src\Core\SchemaManager;
 
-require_once "./classes/BasePostController.php";
+require_once "classes/BasePostController.php";
 
 class PostSaveController extends BasePostController {
 
