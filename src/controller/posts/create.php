@@ -67,6 +67,7 @@ class PostSaveController extends BasePostController {
             // Commit transaction
             $this->db->commit();
 
+            http_response_code(201);
             echo json_encode([
                 "status" => "success",
                 "message" => "Post saved successfully",
