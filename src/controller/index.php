@@ -98,8 +98,9 @@
     </div>
 
     <footer>
-        Mock data endpoints. Developed by <a href="mailto:ashikrn.hq04@gmail.com">Ashik</a>
-
+        <p>Mock data API is a free service provided by <a href="https://mockerjson.xyz">MockerJSON</a>.</p>
+        <p>Developed with <span style="color: red">&#10084;</span> by <a href="mailto:ashikrn.hq04@gmail.com">Ashik</a>
+        </p>
     </footer>
 </body>
 
