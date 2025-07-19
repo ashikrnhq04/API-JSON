@@ -28,6 +28,6 @@ jobs:
         port: 21
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
-        target: 'mocker/' # Adjust based on your server's directory
+        target: 'mockerjson.xyz/' # Adjust based on your server's directory
       env:
         FTP_TIMEOUT: 1000
