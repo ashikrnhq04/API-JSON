@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mock data JSON API</title>
+    <title>Free Mock data JSON API</title>
+    <meta name="description"
+        content="Free mock data JSON API for testing and development purposes. This API provides a set of endpoints to retrieve mock data in JSON format.">
     <style>
     * {
         padding: 0;
@@ -80,13 +82,11 @@
 
 <body>
     <header class="header">
-        <h1>This is a simple API's that provides mock data in JSON format. Inspired by <a style="color: white;"
-                href=" https://jsonplaceholder.typicode.com/">jsonplaceholder.com</a></h1>
+        <h1>Mock data JSON API</h1>
+        <p>Mock data API for testing and development purposes. This API provides a set of endpoints to retrieve mock
+            data in JSON format.</p>
     </header>
     <div class="content">
-        <p>All the REST methods are supported except PUT. Other than GET, all the operations are dummy.</p>
-        <pre>Exmaple: <code>GET /api/v1/products</code></pre>
-
         <h3 style="margin: 20px 0px">Available endpoints:</h3>
         <ul>
             <li><a href="/api/v1/products">/api/v1/products</a> - Get a list of products</li>

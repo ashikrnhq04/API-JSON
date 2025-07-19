@@ -70,7 +70,10 @@ class ProductEditController extends BaseProductController {
         
         $updateData['url'] = toSlug($input['title']);
 
-        $this->db->update("products", $updateData, ["id" => $productId]);
+        $this->db->query(
+            "UPDATE products SET title = :title, description = :description, image = :image, price = :price, url = :url WHERE id = :id"
+            
+        )->execute(array_merge($updateData, ["id" => $productId]));
     }
 
     private function updateProductCategories(int $productId, string $categoriesString): void {

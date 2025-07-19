@@ -14,6 +14,9 @@ $router->post("/api/v1/products", "products/create.php");
 // PATCH
 $router->patch("/api/v1/products/:slug", "products/edit.php");
 
+// PUT
+$router->put("/api/v1/products/:slug", "products/edit.php");
+
 
 // DELETE
 $router->delete("/api/v1/products/:slug", "products/destroy.php");
