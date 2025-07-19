@@ -31,9 +31,10 @@ class ProductSaveController extends BaseProductController {
 
         if($_ENV["APP_ENV"] === "production") {
 
+            http_response_code(201);
             echo json_encode([
                 "status" => "success",
-                "message" => "Product saved successfully",
+                "message" => "Product created successfully",
             ]);
             return;
                 

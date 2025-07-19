@@ -30,6 +30,7 @@ class PostSaveController extends BasePostController {
 
         // mimic the create post operation
         if($_ENV["APP_ENV"] === "production") {
+            http_response_code(201);
             echo json_encode([
                 "status" => "success",
                 "message" => "Post saved successfully",

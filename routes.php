@@ -45,3 +45,4 @@ $router->post("/api/v1/posts", "posts/create.php");
 
 // PATCH
 $router->patch("/api/v1/posts/:slug", "posts/edit.php");
+$router->put("/api/v1/posts/:slug", "posts/edit.php");

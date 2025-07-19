@@ -43,7 +43,7 @@ class SingleProductController extends BaseProductController {
         
         try {
             $column = ctype_digit($this->slug) ? "id" : "url";
-            $sql = "SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
+            $sql = "SELECT p.id, p.title, p.description, p.image, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories, p.url 
             FROM products p
             LEFT JOIN product_category pc ON p.id = pc.product_id
             LEFT JOIN categories c ON c.id = pc.category_id 
