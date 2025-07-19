@@ -36,6 +36,7 @@ class ProductEditController extends BaseProductController {
         }
         
         if($_ENV["APP_ENV"] === "production") {
+            
             echo json_encode([
                 "status" => "success",
                 "message" => "Product updated successfully",
