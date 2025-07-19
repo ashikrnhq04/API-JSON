@@ -40,6 +40,7 @@ class PostEditController extends BasePostController {
             $input = $request->all();
             
             // Get existing post
+             
             $existingPost = $this->getPostBySlug($slug);
             
             if (empty($existingPost)) {
@@ -166,13 +167,6 @@ class PostEditController extends BasePostController {
         }
     }
 
-    /**
-     * Get post by slug
-     */
-    private function getPostBySlug(string $slug): ?array {
-        $result = $this->db->select("posts", ["*"], ["url" => $slug]);
-        return !empty($result) ? $result[0] : null;
-    }
 }
 
 $routeSlug = new Router();

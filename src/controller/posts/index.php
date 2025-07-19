@@ -24,7 +24,7 @@ class PostIndexController extends BasePostController {
     }
 
     private function getAllPosts(): array {
-        $sql = "SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') as categories 
+        $sql = "SELECT p.id, p.title, p.content, p.image, GROUP_CONCAT(c.name SEPARATOR ', ') as categories, p.url
                 FROM posts p
                 LEFT JOIN post_category pc ON p.id = pc.post_id
                 LEFT JOIN categories c ON c.id = pc.category_id 

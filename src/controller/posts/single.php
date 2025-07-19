@@ -43,7 +43,7 @@ class SinglePostController extends BasePostController {
         
         try {
             $column = ctype_digit($this->slug) ? "id" : "url";
-            $sql = "SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
+            $sql = "SELECT p.id, p.title, p.content, p.image, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories, p.url 
             FROM posts p
             LEFT JOIN post_category pc ON p.id = pc.post_id
             LEFT JOIN categories c ON c.id = pc.category_id 

@@ -24,7 +24,7 @@ class ProductIndexController extends BaseProductController {
     }
 
     private function getAllProducts(): array {
-        $sql = "SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') as categories 
+        $sql = "SELECT p.id, p.title, p.description, p.price, p.image, GROUP_CONCAT(c.name SEPARATOR ', ') as categories, p.url
                 FROM products p
                 LEFT JOIN product_category pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON c.id = pc.category_id 
