@@ -93,7 +93,7 @@
             <li><a href="/api/v1/products/1">/api/v1/products/{id|slug}</a> - Get a single product by ID or Slug
             </li>
             <li><a href="/api/v1/posts">/api/v1/posts</a> - Get a list of posts</li>
-            <li><a href="/api/v1/posts/{id}">/api/v1/posts/{id|slug}</a> - Get a single post by ID or Slug</li>
+            <li><a href="/api/v1/posts/1">/api/v1/posts/{id|slug}</a> - Get a single post by ID or Slug</li>
         </ul>
     </div>
 

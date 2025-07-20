@@ -5,6 +5,7 @@ use src\Core\Database;
 
 require_once 'classes/BaseProductController.php';
 
+
 class ProductIndexController extends BaseProductController {
     
     public function index(): void {

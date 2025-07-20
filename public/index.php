@@ -1,5 +1,7 @@
 <?php 
 
+session_start();
+
 use src\Core\Router; 
 use src\Core\Database; 
 use src\Core\App;
@@ -9,6 +11,11 @@ const BASE_PATH = __DIR__ . "/../";
 
 require BASE_PATH . "src/helpers/functions.php";
 require BASE_PATH . "vendor/autoload.php";
+
+$_SESSION = [
+    "user" => "ashik",
+    "access" => "guest"
+];
 
 // Custom autoloader for classes not using Composer
 spl_autoload_register(function ($class) {

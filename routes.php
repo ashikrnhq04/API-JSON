@@ -1,6 +1,5 @@
 <?php
 
-
 $router->get("/", "index.php");
 
 // products routes
@@ -23,21 +22,21 @@ $router->delete("/api/v1/products/:slug", "products/destroy.php");
 
 
 
-// user routes
-// GET
-$router->get("/api/v1/users", "users/index.php");
-$router->get("/api/v1/users/:slug", "users/single.php");
+// // user routes
+// // GET
+// $router->get("/api/v1/users", "users/index.php");
+// $router->get("/api/v1/users/:slug", "users/single.php");
 
-// POST
-$router->post("/api/v1/users", "users/create.php");
+// // POST
+// $router->post("/api/v1/users", "users/create.php");
 
-// PATCH
-$router->patch("/api/v1/users/:slug", "users/create.php");
+// // PATCH
+// $router->patch("/api/v1/users/:slug", "users/create.php");
 
 
 // posts routes
 // GET
-$router->get("/api/v1/posts", "posts/index.php");
+$router->get("/api/v1/posts", "posts/index.php")->;
 $router->get("/api/v1/posts/:slug", "posts/single.php");
 
 // POST

@@ -2,43 +2,55 @@
 
 namespace src\Core;
 
+use src\Core\Middleware\Middleware;
+
 class Router {
     protected $routes = []; 
 
     protected static $slug; 
 
-    public function add(string $method, string $uri, string $controller) {
-
-        $this->routes[] = compact("method", "uri", "controller");
-
+    public function add(string $method, string $uri, string $controller, $access = null) {
+        $this->routes[] = compact("method", "uri", "controller", "access");
     }
 
     public function get(string $uri, string $controller) {
 
         $this->add("GET", $uri, $controller);
+        return $this;
 
     }
 
     public function post(string $uri, string $controller) {
 
         $this->add("POST", $uri, $controller);
+        return $this;
 
     }
 
     public function put(string $uri, string $controller)  {
 
-        $this->add("PUT", $uri, $controller);    
+        $this->add("PUT", $uri, $controller);
+        return $this;
 
     }
 
     public function delete(string $uri, string $controller) {
 
         $this->add("DELETE", $uri, $controller);
+        return $this;
     }
 
     public function patch(string $uri, string $controller) {
 
         $this->add("PATCH", $uri, $controller);
+        return $this;
+    }
+
+    public function only(string $access) {
+        
+        $this->routes[array_key_last($this->routes)]['access'] = $access;
+        
+        return $this;
     }
 
     public function route(string $uri, string $method) {
@@ -48,23 +60,41 @@ class Router {
         }        
 
         // handle static URL 
+        $matchedStatic = false;
         foreach ($this->routes as $route) {
             if ($route['uri'] === $uri && $route['method'] === strtoupper($method)) {
+
+                if (isset($route['access'])) {
+                    Middleware::resolve($route['access']);
+                }
+                
                 controllerPath($route['controller'], []);
-                return;
+                $matchedStatic = true;
+                break;
             }
+            
+        }
+        
+        if ($matchedStatic) {
+            return;
         }
         
         // to handle dynamic URL
         foreach ($this->routes as $route) {
+
             $pattern = extractDynamicURIPattern($route['uri']);
-        
             if (preg_match($pattern, $uri, $matches) && $route['method'] === strtoupper($method)) {
+
+                if (isset($route['access'])) {
+                    Middleware::resolve($route['access']);
+                }
+
                 array_shift($matches);
                 static::$slug = $matches[0] ?? null;
                 controllerPath($route['controller']);
                 return;
             }
+            
         }
         
         $this->abort();
