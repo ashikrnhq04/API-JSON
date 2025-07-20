@@ -36,7 +36,7 @@ $router->delete("/api/v1/products/:slug", "products/destroy.php");
 
 // posts routes
 // GET
-$router->get("/api/v1/posts", "posts/index.php")->;
+$router->get("/api/v1/posts", "posts/index.php");
 $router->get("/api/v1/posts/:slug", "posts/single.php");
 
 // POST

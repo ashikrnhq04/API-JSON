@@ -13,7 +13,6 @@ require BASE_PATH . "src/helpers/functions.php";
 require BASE_PATH . "vendor/autoload.php";
 
 $_SESSION = [
-    "user" => "ashik",
     "access" => "guest"
 ];
 
