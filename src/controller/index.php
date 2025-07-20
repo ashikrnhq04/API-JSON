@@ -82,7 +82,7 @@
 
 <body>
     <header class="header">
-        <h1>Mock data JSON API</h1>
+        <h1>Mock data REST API</h1>
         <p>Mock data API for testing and development purposes. This API provides a set of endpoints to retrieve mock
             data in JSON format.</p>
     </header>
