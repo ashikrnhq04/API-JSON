@@ -91,18 +91,11 @@ jobs:
             exit 1
           fi
 
-          # Run PestPHP tests via Composer to avoid CLI parsing issues
-          echo "🧪 Executing PestPHP test suite via Composer..."
+          # Run tests using custom CI runner to avoid Pest CLI issues
+          echo "🧪 Executing test suite with custom CI runner..."
 
-          # Use composer test-ci command to bypass Pest CLI argument parsing issues
+          # Use custom test runner that handles Pest CLI issues gracefully
           composer test-ci
-
-          if [ $? -eq 0 ]; then
-            echo "🎉 All tests passed!"
-          else
-            echo "❌ Tests failed with exit code $?"
-            exit 1
-          fi
 
   # Job 2: Build and deploy (only after tests pass)
   deploy:

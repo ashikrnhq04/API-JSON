@@ -54,7 +54,10 @@
       "@php ./vendor/bin/pest --no-configuration --do-not-cache-result --colors=never tests/"
     ],
     "test-ci": [
-      "@php ./vendor/bin/pest --no-configuration --do-not-cache-result --colors=never tests/"
+      "@php run-tests.php"
+    ],
+    "test-phpunit": [
+      "@php -d memory_limit=512M ./vendor/bin/phpunit --bootstrap vendor/autoload.php --testsuite 'Test Suite' --no-configuration --colors=never tests/"
     ],
     "test-all": "./vendor/bin/pest tests/",
     "test-coverage": "./vendor/bin/pest --coverage",
