@@ -94,8 +94,8 @@ jobs:
           # Run PestPHP tests with proper configuration
           echo "🧪 Executing PestPHP test suite..."
 
-          # Run tests without specifying individual files, let Pest discover them
-          ./vendor/bin/pest --colors=never --no-coverage
+          # Run tests without configuration to avoid XML parsing issues
+          ./vendor/bin/pest --no-configuration --colors=never tests/
 
           if [ $? -eq 0 ]; then
             echo "🎉 All tests passed!"
