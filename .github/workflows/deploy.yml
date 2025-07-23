@@ -1,25 +1,254 @@
-# 3. Validate composer.json and update lock file
-  - name: 🔍 Validate Composer
-    run: |
-     composer validate --strict
-     echo "✅ Composer validation passed"
+name: Deploy to cPanel Production
 
-    # 4. Cache Composer dependencies
-    - name: 📦 Cache Composer dependencies
-      uses: actions/cache@v3
-      with:
-        path: /tmp/composer-cache
-        key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-composer-
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
 
-    # 5. Install production dependencies
-    - name: 🚀 Install Production Dependencies
-      run: |
-        composer install \
-          --no-dev \
-          --no-interaction \
-          --no-progress \
-          --optimize-autoloader \
-          --classmap-authoritative
-        echo "✅ Composer install completed"
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '18'
+
+jobs:
+  # Job 1: Run tests before deployment
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔄 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, curl
+          coverage: xdebug
+
+      - name: 📦 Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: 🔄 Cache Composer Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: 🔧 Install Dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: 🧪 Run Test Suite
+        run: composer test
+
+  # Job 2: Build and deploy (only after tests pass)
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 🔄 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, curl, zip
+          ini-values: post_max_size=256M, upload_max_filesize=256M, memory_limit=512M
+          coverage: none
+
+      - name: ✅ Validate Composer
+        run: |
+          composer validate --strict --no-check-publish
+          echo "✅ Composer validation passed"
+
+      - name: 📦 Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: 🔄 Cache Composer Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-prod-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-prod-
+
+      - name: 🚀 Install Production Dependencies
+        run: |
+          composer install \
+            --no-dev \
+            --no-interaction \
+            --no-progress \
+            --optimize-autoloader \
+            --classmap-authoritative \
+            --prefer-dist
+          echo "✅ Production dependencies installed"
+
+      - name: 🔧 Create Production Environment
+        run: |
+          echo "Creating production environment file..."
+          cat > .env << EOF
+          # Database Configuration
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_PORT=${{ secrets.DB_PORT || '3306' }}
+          
+          # Application Configuration
+          APP_ENV=production
+          APP_DEBUG=false
+          APP_URL=${{ secrets.APP_URL || 'https://mockerjson.xyz' }}
+          
+          # Security
+          APP_KEY=${{ secrets.APP_KEY }}
+          SECURE_SSL=true
+          EOF
+          
+          # Validate .env file
+          if [ -f .env ]; then
+            echo "✅ Production .env file created successfully"
+            echo "📄 Environment variables configured: $(grep -c "=" .env) variables"
+          else
+            echo "❌ Failed to create .env file"
+            exit 1
+          fi
+
+      - name: 🗂️ Prepare Deployment Files
+        run: |
+          echo "Preparing files for deployment..."
+          
+          # Create deployment directory
+          mkdir -p deploy
+          
+          # Copy application files
+          cp -r app/ deploy/
+          cp -r bootstrap/ deploy/
+          cp -r config/ deploy/
+          cp -r public/ deploy/
+          cp -r routes/ deploy/
+          cp -r storage/ deploy/
+          cp -r vendor/ deploy/
+          
+          # Copy configuration files
+          cp .env deploy/
+          cp composer.json deploy/
+          
+          # Create necessary directories with proper permissions
+          mkdir -p deploy/storage/logs
+          chmod -R 755 deploy/storage/
+          
+          # Set proper file permissions
+          find deploy/ -type f -exec chmod 644 {} \;
+          find deploy/ -type d -exec chmod 755 {} \;
+          
+          # Make sure .env is readable
+          chmod 644 deploy/.env
+          
+          echo "✅ Deployment files prepared"
+          echo "📦 Total files: $(find deploy/ -type f | wc -l)"
+          echo "📁 Total directories: $(find deploy/ -type d | wc -l)"
+
+      - name: 🧹 Production Cleanup
+        run: |
+          echo "Cleaning up development files..."
+          
+          # Remove development and testing files
+          rm -rf deploy/tests/ 2>/dev/null || true
+          rm -f deploy/.git* 2>/dev/null || true
+          rm -f deploy/phpunit.xml* 2>/dev/null || true
+          rm -f deploy/Pest.php 2>/dev/null || true
+          rm -f deploy/README.md 2>/dev/null || true
+          rm -f deploy/composer.lock 2>/dev/null || true
+          
+          # Remove any hidden development files
+          find deploy/ -name ".*" -type f ! -name ".env" -delete 2>/dev/null || true
+          find deploy/ -name "*.md" -type f -delete 2>/dev/null || true
+          find deploy/ -name ".DS_Store" -type f -delete 2>/dev/null || true
+          
+          echo "✅ Development files cleaned up"
+
+      - name: 🔐 Security Hardening
+        run: |
+          echo "Applying security hardening..."
+          
+          # Create .htaccess for public directory if it doesn't exist
+          if [ ! -f deploy/public/.htaccess ]; then
+            cat > deploy/public/.htaccess << 'EOF'
+          RewriteEngine On
+          
+          # Handle Angular and Vue.js routes
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^(.*)$ index.php [QSA,L]
+          
+          # Security headers
+          Header always set X-Content-Type-Options nosniff
+          Header always set X-Frame-Options DENY
+          Header always set X-XSS-Protection "1; mode=block"
+          Header always set Referrer-Policy "strict-origin-when-cross-origin"
+          
+          # Hide server signature
+          ServerTokens Prod
+          EOF
+          fi
+          
+          # Secure sensitive directories
+          echo "Deny from all" > deploy/storage/.htaccess
+          echo "Deny from all" > deploy/app/.htaccess
+          echo "Deny from all" > deploy/bootstrap/.htaccess
+          echo "Deny from all" > deploy/config/.htaccess
+          
+          echo "✅ Security hardening applied"
+
+      - name: 🚀 Deploy to cPanel via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          port: ${{ secrets.FTP_PORT || '21' }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local_path: './deploy/'
+          remote_path: ${{ secrets.REMOTE_PATH || '/public_html/' }}
+          sftp_only: false
+          delete_remote_files: false
+        env:
+          DEPLOY_TIMEOUT: 60000
+
+      - name: 🏥 Post-Deployment Health Check
+        run: |
+          echo "Waiting for deployment to settle..."
+          sleep 45
+          
+          API_URL="${{ secrets.APP_URL || 'https://mockerjson.xyz' }}"
+          
+          echo "🔍 Testing API endpoints..."
+          
+          # Test main endpoint
+          echo "Testing main endpoint: $API_URL"
+          MAIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL" || echo "000")
+          
+          # Test API endpoint
+          echo "Testing API endpoint: $API_URL/api/v1/products"
+          API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/api/v1/products" || echo "000")
+          
+          # Check results
+          if [ "$MAIN_STATUS" = "200" ] && [ "$API_STATUS" = "200" ]; then
+            echo "✅ Health check PASSED"
+            echo "🌐 Main site:
