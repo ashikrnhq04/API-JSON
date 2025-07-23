@@ -1,33 +1,172 @@
-name: Deploy to cPanel  
+name: Deploy to cPanel Production
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch: # Allow manual deployment
 
 jobs:
   deploy:
-    name: FTP Deployment
+    name: Production Deployment
     runs-on: ubuntu-latest
-
+    
     steps:
-    # 1. Check out the repository
-    - name: Checkout repository
+    # 1. Checkout repository
+    - name: 🔄 Checkout repository
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0 # Get full history for better deployment tracking
 
-    - name: 🔧 Install git-ftp
-      run: |
-        sudo apt-get update
-        sudo apt-get install git-ftp
-    - name: Deploy to cPanel
-      uses: ashikrnhq04/SFTP-Action-cPanel@master
+    # 2. Setup PHP with required extensions
+    - name: 🐘 Setup PHP
+      uses: shivammathur/setup-php@v2
       with:
-        host: ${{ secrets.HOST }}
-        port: 21
+        php-version: '8.3'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json
+        ini-values: post_max_size=256M, upload_max_filesize=256M, memory_limit=512M
+        coverage: none
+
+    # 3. Validate composer.json
+    - name: 🔍 Validate Composer
+      run: composer validate --strict
+
+    # 4. Cache Composer dependencies
+    - name: 📦 Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: /tmp/composer-cache
+        key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-composer-
+
+    # 5. Install production dependencies
+    - name: 🚀 Install Production Dependencies
+      run: |
+        composer install \
+          --no-dev \
+          --no-interaction \
+          --no-progress \
+          --no-suggest \
+          --optimize-autoloader \
+          --classmap-authoritative
+        echo "✅ Composer install completed"
+
+    # 6. Create production environment file
+    - name: 🔧 Create Production Environment
+      run: |
+        echo "Creating production .env file..."
+        cat > .env << EOF
+        DB_HOST=${{ secrets.DB_HOST }}
+        DB_NAME=${{ secrets.DB_NAME }}
+        DB_USERNAME=${{ secrets.DB_USERNAME }}
+        DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+        DB_PORT=${{ secrets.DB_PORT || 3306 }}
+        
+        APP_ENV=production
+        APP_DEBUG=false
+        APP_URL=${{ secrets.APP_URL || 'https://mockerjson.xyz' }}
+        
+        # Security
+        APP_KEY=${{ secrets.APP_KEY }}
+        SECURE_SSL=true
+        EOF
+        echo "✅ Production .env created"
+
+    # 7. Optimize for production
+    - name: ⚡ Production Optimizations
+      run: |
+        # Remove development files
+        rm -rf tests/
+        rm -rf .git/
+        rm -rf .github/
+        rm -f .gitignore
+        rm -f .gitattributes
+        rm -f phpunit.xml
+        rm -f Pest.php
+        rm -f composer.lock
+        
+        # Remove any dev-only files
+        find . -name "*.md" -type f -delete
+        find . -name ".DS_Store" -type f -delete
+        
+        # Optimize file permissions
+        find . -type f -exec chmod 644 {} \;
+        find . -type d -exec chmod 755 {} \;
+        chmod 644 .env
+        
+        echo "✅ Production optimization completed"
+
+    # 8. Create deployment archive
+    - name: 📦 Create Deployment Package
+      run: |
+        # Create a clean deployment directory
+        mkdir -p deployment
+        
+        # Copy essential files only
+        cp -r app/ deployment/
+        cp -r bootstrap/ deployment/
+        cp -r config/ deployment/
+        cp -r public/ deployment/
+        cp -r routes/ deployment/
+        cp -r storage/ deployment/
+        cp -r vendor/ deployment/
+        cp .env deployment/
+        cp composer.json deployment/
+        
+        # Ensure storage directories are writable
+        mkdir -p deployment/storage/logs
+        chmod -R 755 deployment/storage/
+        
+        echo "✅ Deployment package created"
+
+    # 9. Deploy via SFTP with retry logic
+    - name: 🚀 Deploy to cPanel
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      with:
+        server: ${{ secrets.HOST }}
+        port: ${{ secrets.PORT || 21 }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
-        target: 'mockerjson.xyz/' # Adjust based on your server's directory
+        local_path: './deployment/*'
+        remote_path: ${{ secrets.REMOTE_PATH || '/public_html/' }}
+        delete_remote_files: false
+        sftp_only: false
       env:
-        FTP_TIMEOUT: 1000
+        SFTP_TIMEOUT: 30000
+
+    # 10. Post-deployment health check
+    - name: 🏥 Health Check
+      run: |
+        sleep 30 # Wait for deployment to settle
+        
+        # Check if the API is responding
+        response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL || 'https://mockerjson.xyz' }}/api/v1/products" || echo "000")
+        
+        if [ "$response" = "200" ]; then
+          echo "✅ Health check passed - API is responding"
+        else
+          echo "❌ Health check failed - HTTP $response"
+          echo "::warning::Deployment may have issues. Check server logs."
+        fi
+
+    # 11. Cleanup
+    - name: 🧹 Cleanup
+      if: always()
+      run: |
+        rm -rf deployment/
+        rm -f .env
+        echo "✅ Cleanup completed"
+
+    # 12. Notify deployment status
+    - name: 📧 Deployment Notification
+      if: always()
+      run: |
+        if [ "${{ job.status }}" = "success" ]; then
+          echo "🎉 Deployment to production completed successfully!"
+          echo "🌐 API URL: ${{ secrets.APP_URL || 'https://mockerjson.xyz' }}"
+          echo "📊 API Endpoints: ${{ secrets.APP_URL || 'https://mockerjson.xyz' }}/api/v1/"
+        else
+          echo "💥 Deployment failed! Check the logs above."
+        fi
