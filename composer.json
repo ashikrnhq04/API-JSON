@@ -3,7 +3,6 @@
   "description": "A modern PHP REST API for e-commerce with products and posts management",
   "type": "project",
   "license": "MIT",
-  "version": "1.0.0",
   "keywords": [
     "php",
     "api",
