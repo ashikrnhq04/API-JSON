@@ -139,5 +139,13 @@ composer-dev.lock
 mix-manifest.json
 .mix
 
+# GitHub Actions and CI/CD
+.github/workflows/*.yml.bak
+.github/secrets/
+
+# Deployment artifacts
+deploy/
+deployment.zip
+
 # Temporary files
 *.tmp
