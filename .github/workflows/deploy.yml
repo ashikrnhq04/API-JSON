@@ -94,8 +94,11 @@ jobs:
           # Run PestPHP tests with proper configuration
           echo "🧪 Executing PestPHP test suite..."
 
-          # Run tests without configuration to avoid XML parsing issues
-          ./vendor/bin/pest --no-configuration --colors=never tests/
+          # Create cache directory to prevent XML parsing issues
+          mkdir -p .pest-cache
+
+          # Run tests without configuration and disable caching to avoid XML parsing issues in CI
+          ./vendor/bin/pest --no-configuration --do-not-cache-result --colors=never tests/
 
           if [ $? -eq 0 ]; then
             echo "🎉 All tests passed!"
