@@ -4,7 +4,24 @@
   },
   "autoload": {
     "psr-4": {
-      "src\\Core\\": "src/Core"
+      "Core\\": "https/app/Core/",
+      "Http\\Controllers\\": "https/app/Http/Controllers/",
+      "Models\\": "https/app/Models/",
+      "Schema\\": "https/app/Schema/",
+      "Views\\": "https/app/Views/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "pestphp/pest": "^3.8"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
     }
   }
 }

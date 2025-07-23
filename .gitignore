@@ -99,8 +99,26 @@ pids
 *.pid.lock
 
 # Test files and directories
+tests/
 tests/coverage/
 .phpunit.cache
+.phpunit.result.cache
+
+# PestPHP and testing artifacts
+.pest/
+pest.xml
+.pest.cache
+
+# Test environment files
+.env.testing
+.env.test
+phpunit.xml.dist
+
+# Test coverage reports
+tests/reports/
+coverage.xml
+clover.xml
+junit.xml
 
 # Local development files
 .vagrant/
@@ -108,6 +126,14 @@ Vagrantfile.local
 .homestead/
 Homestead.yaml
 Homestead.json
+
+# Development tools (should be excluded in production)
+# Note: vendor/pestphp/ automatically excluded with composer install --no-dev
+/vendor/bin/pest
+/vendor/bin/phpunit
+
+# Development configuration
+composer-dev.lock
 
 # Asset compilation
 mix-manifest.json

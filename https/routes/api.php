@@ -1,10 +1,9 @@
 <?php
 
-$router->get("/", "index.php");
+use Http\Controllers\ProductController;
+use Http\Controllers\PostController;
 
-// Include controller classes
-require_once __DIR__ . '/src/controller/ProductController.php';
-require_once __DIR__ . '/src/controller/PostController.php';
+$router->get("/", "index.php");
 
 // products routes - Using MVC Controller Pattern
 // GET
