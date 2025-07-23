@@ -106,7 +106,7 @@ pids
 *.pid.lock
 
 # Test files and directories
-tests/
+# tests/ # Keep test files for CI/CD
 tests/coverage/
 .phpunit.cache
 .phpunit.result.cache
@@ -122,7 +122,9 @@ pest.xml
 phpunit.xml.dist
 
 # Test coverage reports
+# tests/reports/ # Keep test structure, exclude only reports
 tests/reports/
+tests/coverage/
 coverage.xml
 clover.xml
 junit.xml
