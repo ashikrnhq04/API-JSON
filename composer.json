@@ -4,11 +4,11 @@
   },
   "autoload": {
     "psr-4": {
-      "Core\\": "https/app/Core/",
-      "Http\\Controllers\\": "https/app/Http/Controllers/",
-      "Models\\": "https/app/Models/",
-      "Schema\\": "https/app/Schema/",
-      "Views\\": "https/app/Views/"
+      "Core\\": "app/Core/",
+      "Http\\Controllers\\": "app/Http/Controllers/",
+      "Models\\": "app/Models/",
+      "Schema\\": "app/Schema/",
+      "Views\\": "app/Views/"
     }
   },
   "autoload-dev": {
