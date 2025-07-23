@@ -3,7 +3,9 @@
 use Http\Controllers\ProductController;
 use Http\Controllers\PostController;
 
-$router->get("/", "index.php");
+$router->get("/", function() {
+    require BASE_PATH . "app/Http/Controllers/index.php";
+});
 
 // products routes - Using MVC Controller Pattern
 // GET

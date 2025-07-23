@@ -16,9 +16,11 @@ $_SESSION = [
     "access" => "guest"
 ];
 
-// Load environment variables
-$dotenv = Dotenv::createImmutable(BASE_PATH);
-$dotenv->load();
+// Load environment variables (optional)
+if (file_exists(BASE_PATH . '.env')) {
+    $dotenv = Dotenv::createImmutable(BASE_PATH);
+    $dotenv->load();
+}
 
 // Bootstrap the application
 require BASE_PATH . "bootstrap/app.php";
