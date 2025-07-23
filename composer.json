@@ -1,6 +1,37 @@
 {
+  "name": "ashikubuntu/commercio-api",
+  "description": "A modern PHP REST API for mock products and posts data",
+  "type": "project",
+  "license": "MIT",
+  "version": "1.0.0",
+  "keywords": [
+    "php",
+    "api",
+    "rest",
+    "ecommerce",
+    "mvc",
+    "commercio"
+  ],
+  "authors": [
+    {
+      "name": "Ashik Rahman",
+      "email": "ashikrn.hq04@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "homepage": "https://mockerjson.xyz",
+  "support": {
+    "issues": "https://github.com/ashikrnhq04/commercio/issues",
+    "source": "https://github.com/ashikrnhq04/commercio"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
   "require": {
+    "php": ">=8.1",
     "vlucas/phpdotenv": "^5.6"
+  },
+  "require-dev": {
+    "pestphp/pest": "^3.8"
   },
   "autoload": {
     "psr-4": {
@@ -9,19 +40,40 @@
       "Models\\": "app/Models/",
       "Schema\\": "app/Schema/",
       "Views\\": "app/Views/"
-    }
+    },
+    "files": [
+      "app/helpers/functions.php"
+    ]
   },
   "autoload-dev": {
     "psr-4": {
       "Tests\\": "tests/"
     }
   },
-  "require-dev": {
-    "pestphp/pest": "^3.8"
+  "scripts": {
+    "test": "pest",
+    "test-coverage": "pest --coverage",
+    "serve": "php -S localhost:8000 -t public",
+    "post-autoload-dump": [
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+    ]
+  },
+  "scripts-descriptions": {
+    "test": "Run the test suite",
+    "test-coverage": "Run tests with coverage report",
+    "serve": "Start the development server"
   },
   "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true,
     "allow-plugins": {
       "pestphp/pest-plugin": true
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0-dev"
     }
   }
 }
