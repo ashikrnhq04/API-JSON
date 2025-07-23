@@ -22,7 +22,7 @@ function controllerPath($filePath,  $args = []) {
 
     extract($args);
 
-    require HTTPS_PATH . "app/Http/Controllers/{$filePath}";
+    require BASE_PATH . "app/Http/Controllers/{$filePath}";
 }
 
 function schemaPath($filePath) {
