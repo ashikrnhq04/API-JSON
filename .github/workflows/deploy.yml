@@ -48,11 +48,25 @@ jobs:
       - name: 🔧 Install Dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      - name: 🔧 Setup Test Environment
+        run: |
+          echo "Setting up test environment..."
+          cp .env.example .env
+          echo "✅ Test environment configured"
+
       - name: 🧪 Run Test Suite
         run: |
           echo "✅ Running test suite..."
-          composer test
-          echo "🎉 All tests passed!"
+
+          # Run tests directly with explicit paths
+          ./vendor/bin/pest tests/Feature/ExampleTest.php tests/Unit/ExampleTest.php --colors=never
+
+          if [ $? -eq 0 ]; then
+            echo "🎉 All tests passed!"
+          else
+            echo "❌ Tests failed with exit code $?"
+            exit 1
+          fi
 
   # Job 2: Build and deploy (only after tests pass)
   deploy:
@@ -219,6 +233,61 @@ jobs:
 
           echo "✅ Security hardening applied"
 
+      - name: 🧹 Pre-Deployment Cleanup (Shared Hosting Safe)
+        run: |
+          echo "Creating cleanup script for shared hosting..."
+          cat > cleanup-remote.sh << 'EOF'
+          #!/bin/bash
+
+          # Define remote path (will be set by environment variable)
+          REMOTE_PATH="${REMOTE_PATH:-/public_html/mockerjson.xyz/}"
+
+          echo "🧹 Cleaning up old directory structure..."
+
+          # Remove old directory structures that may conflict
+          echo "Removing old 'src/' directory if exists..."
+          rm -rf "${REMOTE_PATH}src/" 2>/dev/null || true
+
+          echo "Removing old 'https/' directory if exists..."
+          rm -rf "${REMOTE_PATH}https/" 2>/dev/null || true
+
+          # Remove specific old files that might cause conflicts
+          echo "Removing old autoloader files..."
+          rm -f "${REMOTE_PATH}autoload.php" 2>/dev/null || true
+          rm -f "${REMOTE_PATH}spl_autoload.php" 2>/dev/null || true
+
+          # Remove old config files that might have wrong paths
+          echo "Removing potentially outdated config files..."
+          rm -f "${REMOTE_PATH}config/old_config.php" 2>/dev/null || true
+
+          # Clean up old vendor directories (except current one)
+          echo "Cleaning up old vendor backups..."
+          rm -rf "${REMOTE_PATH}vendor_backup/" 2>/dev/null || true
+          rm -rf "${REMOTE_PATH}vendor.old/" 2>/dev/null || true
+
+          # Remove old test directories (should not be in production)
+          echo "Removing test directories from production..."
+          rm -rf "${REMOTE_PATH}tests/" 2>/dev/null || true
+          rm -rf "${REMOTE_PATH}test/" 2>/dev/null || true
+
+          # Remove development files
+          echo "Removing development files..."
+          rm -f "${REMOTE_PATH}.env.example" 2>/dev/null || true
+          rm -f "${REMOTE_PATH}phpunit.xml" 2>/dev/null || true
+          rm -f "${REMOTE_PATH}Pest.php" 2>/dev/null || true
+          rm -f "${REMOTE_PATH}composer.lock" 2>/dev/null || true
+          rm -f "${REMOTE_PATH}README.md" 2>/dev/null || true
+
+          # Remove any .git directories (security)
+          echo "Removing any .git directories..."
+          find "${REMOTE_PATH}" -name ".git" -type d -exec rm -rf {} + 2>/dev/null || true
+
+          echo "✅ Pre-deployment cleanup completed"
+          EOF
+
+          chmod +x cleanup-remote.sh
+          echo "✅ Cleanup script created"
+
       - name: 🚀 Deploy to cPanel via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -227,11 +296,79 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local_path: "./deploy/"
-          remote_path: ${{ secrets.REMOTE_PATH || '/public_html/' }}
+          remote_path: ${{ secrets.REMOTE_PATH || '/mockerjson.xyz/' }}
           sftp_only: false
           delete_remote_files: false
         env:
           DEPLOY_TIMEOUT: 60000
+
+      - name: 🧼 Post-Deployment Remote Cleanup
+        run: |
+          echo "Creating cleanup script for leftover files..."
+          cat > deploy/cleanup.php << 'EOF'
+          <?php
+          // Cleanup script to remove old directory structure
+          echo "🧹 Starting cleanup of old files...\n";
+
+          // Define base path
+          $basePath = __DIR__ . '/';
+
+          // Directories to remove (old structure)
+          $oldDirs = ['src', 'https', 'tests', 'test'];
+
+          foreach ($oldDirs as $dir) {
+              $fullPath = $basePath . $dir;
+              if (is_dir($fullPath)) {
+                  echo "Removing old directory: $dir\n";
+                  exec("rm -rf " . escapeshellarg($fullPath));
+              }
+          }
+
+          // Files to remove (development/old files)
+          $oldFiles = [
+              '.env.example',
+              'phpunit.xml', 
+              'Pest.php',
+              'composer.lock',
+              'README.md',
+              'autoload.php',
+              'spl_autoload.php'
+          ];
+
+          foreach ($oldFiles as $file) {
+              $fullPath = $basePath . $file;
+              if (file_exists($fullPath)) {
+                  echo "Removing old file: $file\n";
+                  unlink($fullPath);
+              }
+          }
+
+          // Remove this cleanup script itself
+          echo "Cleanup completed. Removing cleanup script...\n";
+          unlink(__FILE__);
+          EOF
+
+          echo "✅ Cleanup script added to deployment"
+
+      - name: 🧼 Execute Remote Cleanup
+        run: |
+          echo "Executing cleanup script on remote server..."
+
+          # Execute the cleanup script via HTTP request
+          API_URL="${{ secrets.APP_URL || 'https://mockerjson.xyz' }}"
+          CLEANUP_URL="${API_URL}/cleanup.php"
+
+          echo "Triggering cleanup at: $CLEANUP_URL"
+
+          # Execute cleanup script
+          CLEANUP_RESPONSE=$(curl -s -w "%{http_code}" "$CLEANUP_URL" || echo "000")
+
+          if [[ $CLEANUP_RESPONSE == *"200"* ]]; then
+            echo "✅ Cleanup script executed successfully"
+          else
+            echo "⚠️ Cleanup script may not have executed (HTTP: $CLEANUP_RESPONSE)"
+            echo "Note: This is not critical for deployment success"
+          fi
 
       - name: 🏥 Post-Deployment Health Check
         run: |

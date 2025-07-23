@@ -50,7 +50,9 @@
     }
   },
   "scripts": {
-    "test": "./vendor/bin/pest tests/Feature/ExampleTest.php tests/Unit/ExampleTest.php",
+    "test": [
+      "@php ./vendor/bin/pest tests/Feature/ExampleTest.php tests/Unit/ExampleTest.php --colors=never"
+    ],
     "test-all": "./vendor/bin/pest tests/",
     "test-coverage": "./vendor/bin/pest --coverage",
     "serve": "php -S localhost:8000 -t public",
