@@ -51,7 +51,26 @@ jobs:
       - name: 🔧 Setup Test Environment
         run: |
           echo "Setting up test environment..."
-          cp .env.example .env
+
+          # Create test .env file
+          cat > .env << EOF
+          # Database Configuration (Test)
+          DB_HOST=localhost
+          DB_NAME=test_commercio_db
+          DB_USERNAME=root
+          DB_PASSWORD=
+          DB_PORT=3306
+
+          # Application Configuration (Test)
+          APP_ENV=testing
+          APP_DEBUG=true
+          APP_URL=http://localhost
+
+          # Security (Test)
+          APP_KEY=test-key-for-ci
+          SECURE_SSL=false
+          EOF
+
           echo "✅ Test environment configured"
 
       - name: 🧪 Run Test Suite

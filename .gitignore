@@ -1,9 +1,16 @@
 
 # Environment Configuration Files
 .env
-.env.*
+.env.local
+.env.production
+.env.testing
 **/.env
-**/.env.*
+**/.env.local
+**/.env.production
+**/.env.testing
+
+# Keep .env.example for reference
+!.env.example
 
 # Dependency directories
 vendor/
