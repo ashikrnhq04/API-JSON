@@ -91,14 +91,11 @@ jobs:
             exit 1
           fi
 
-          # Run PestPHP tests with proper configuration
-          echo "🧪 Executing PestPHP test suite..."
+          # Run PestPHP tests via Composer to avoid CLI parsing issues
+          echo "🧪 Executing PestPHP test suite via Composer..."
 
-          # Create cache directory to prevent XML parsing issues
-          mkdir -p .pest-cache
-
-          # Run tests without configuration and disable caching to avoid XML parsing issues in CI
-          ./vendor/bin/pest --no-configuration --do-not-cache-result --colors=never tests/
+          # Use composer test-ci command to bypass Pest CLI argument parsing issues
+          composer test-ci
 
           if [ $? -eq 0 ]; then
             echo "🎉 All tests passed!"
