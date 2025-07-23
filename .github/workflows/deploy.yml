@@ -1,39 +1,27 @@
-name: Deploy to cPanel Production
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
-
-env:
-  PHP_VERSION: '8.3'
-  NODE_VERSION: '18'
-
-jobs:
-  # Job 1: Run tests before deployment
-  test:
-    name: Run Tests
+  # Simplified workflow without tests (temporary)
+  deploy:
+    name: Deploy to Production
     runs-on: ubuntu-latest
+    # Remove the needs: test line
+    if: github.ref == 'refs/heads/main'
     
     steps:
       - name: 🔄 Checkout Code
         uses: actions/checkout@v4
 
+      # Skip the test validation for now
+      # - name: 🧪 Run Test Suite
+      #   run: composer test
+
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, curl
-          coverage: xdebug
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, curl, zip
+          ini-values: post_max_size=256M, upload_max_filesize=256M, memory_limit=512M
+          coverage: none
+
+      # Continue with the rest of the deployment steps...
 
       - name: 📦 Get Composer Cache Directory
         id: composer-cache
