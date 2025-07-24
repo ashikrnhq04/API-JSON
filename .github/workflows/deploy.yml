@@ -320,10 +320,10 @@ jobs:
       - name: 🚀 Deploy to cPanel via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.FTP_HOST }}
-          port: ${{ secrets.FTP_PORT || '21' }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          server: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT || '21' }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
           local_path: "./deploy/"
           remote_path: ${{ secrets.REMOTE_PATH || '/mockerjson.xyz/' }}
           sftp_only: false
