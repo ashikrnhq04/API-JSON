@@ -1,61 +1,179 @@
-# PHP REST API Framework ([live](https://mockerjson.xyz/))
+# MockerJSON API
 
-A lightweight, custom-built PHP framework for creating REST APIs with support for posts and products.
+[![Deploy to cPanel](https://github.com/ashikrnhq04/producntuserAPI/actions/workflows/deploy.yml/badge.svg)](https://github.com/ashikrnhq04/producntuserAPI/actions/workflows/deploy.yml)
+[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://php.net)
+[![Live API](https://img.shields.io/badge/Live%20API-mockerjson.xyz-green.svg)](https://mockerjson.xyz)
 
-## 🚀 Features
+> **Free Mock Data REST API for Developers** - High-quality, realistic mock data for testing and development
 
-- **Custom PHP Framework** - Built from scratch with modern PHP practices
-- **REST API Endpoints** - Full CRUD operations for posts, products, and users
-- **Category Management** - Flexible categorization system with many-to-many relationships
-- **Database Abstraction** - Custom Database class with query builder and transaction support
-- **Request Validation** - Built-in validation system with customizable rules
-- **Schema Management** - Automated database table creation and management
-- **Routing System** - Clean URL routing with parameter support
-- **Container/DI** - Dependency injection container for service management
+MockerJSON is a free, fast, and reliable REST API providing realistic mock data for products and blog posts. Perfect for frontend development, testing, prototyping, and learning.
 
-## 📁 Project Structure
+🌐 **Live API**: [https://mockerjson.xyz](https://mockerjson.xyz)
+
+## ✨ Features
+
+- 🎯 **Realistic Data** - High-quality mock products and blog posts
+- ⚡ **Fast & Reliable** - Optimized responses with consistent performance
+- 🔄 **RESTful Design** - Standard HTTP methods and status codes
+- 📊 **Pagination Support** - Built-in pagination with metadata
+- 🌐 **CORS Enabled** - Use directly from frontend applications
+- 🆓 **Completely Free** - No API keys or registration required
+- 🚀 **No Rate Limits** (currently) - Use as much as you need
+
+## 🚀 Quick Start
+
+```javascript
+// Fetch products
+fetch("https://mockerjson.xyz/api/v1/products?limit=5")
+  .then((response) => response.json())
+  .then((data) => console.log(data));
+
+// Fetch blog posts
+fetch("https://mockerjson.xyz/api/v1/posts?limit=3")
+  .then((response) => response.json())
+  .then((data) => console.log(data));
+```
+
+## 📡 API Endpoints
+
+### Products
+
+- `GET /api/v1/products` - List all products
+- `GET /api/v1/products/{id}` - Get product by ID
+- `GET /api/v1/products/{slug}` - Get product by URL slug
+
+### Posts
+
+- `GET /api/v1/posts` - List all blog posts
+- `GET /api/v1/posts/{id}` - Get post by ID
+- `GET /api/v1/posts/{slug}` - Get post by URL slug
+
+### Query Parameters
+
+- `limit` (integer, 1-100) - Number of items to return (default: 10)
+- `offset` (integer) - Number of items to skip (default: 0)
+
+## 📝 Example Responses
+
+### Products Response
+
+```json
+{
+  "status": "success",
+  "message": "Products retrieved successfully",
+  "pagination": {
+    "total": 119,
+    "limit": 10,
+    "offset": 0,
+    "hasMore": true
+  },
+  "data": [
+    {
+      "id": 1,
+      "title": "Wireless Bluetooth Headphones",
+      "description": "High-quality wireless headphones with noise cancellation",
+      "price": 99.99,
+      "image": "https://placehold.co/400x300/3498DB/FFFFFF",
+      "url": "wireless-bluetooth-headphones"
+    }
+  ]
+}
+```
+
+### Posts Response
+
+```json
+{
+  "status": "success",
+  "message": "Posts retrieved successfully",
+  "pagination": {
+    "total": 50,
+    "limit": 10,
+    "offset": 0,
+    "hasMore": true
+  },
+  "data": [
+    {
+      "id": 1,
+      "title": "Getting Started with React Hooks",
+      "content": "React Hooks have revolutionized how we write React components...",
+      "image": "https://placehold.co/800x400/E74C3C/FFFFFF",
+      "url": "getting-started-with-react-hooks"
+    }
+  ]
+}
+```
+
+## 🏗️ Project Structure
 
 ```
 commercio/
-├── public/                 # Web server document root
-│   ├── index.php          # Application entry point
-│   └── robots.txt         # SEO robots configuration
-├── src/                   # Application source code
-│   ├── Core/              # Framework core classes
-│   │   ├── App.php        # Application container
-│   │   ├── Database.php   # Database abstraction layer
-│   │   ├── Router.php     # URL routing system
-│   │   ├── Requests.php   # Request handling and validation
-│   │   └── Validator.php  # Input validation
-│   ├── controller/        # API controllers
-│   │   ├── posts/         # Post management endpoints
-│   │   └── products/      # Product management endpoints
-│   ├── views/             # Response templates
-│   ├── helpers/           # Utility functions
-│   └── schema/            # Database schema definitions
-├── vendor/                # Composer dependencies
-├── bootstrap.php          # Application bootstrap
-├── config.php             # Configuration settings
-├── routes.php             # API route definitions
-└── composer.json          # Composer configuration
+├── .github/
+│   └── workflows/
+│       └── deploy.yml         # GitHub Actions CI/CD
+├── app/
+│   ├── Core/                  # Framework core classes
+│   │   ├── App.php           # DI Container
+│   │   ├── Database.php      # Database abstraction
+│   │   ├── Router.php        # URL routing system
+│   │   ├── Requests.php      # Request handling
+│   │   ├── Validator.php     # Input validation
+│   │   ├── SchemaManager.php # Database schema management
+│   │   └── Middleware/       # Authentication middleware
+│   ├── Http/
+│   │   └── Controllers/      # API controllers
+│   │       ├── ProductController.php
+│   │       ├── PostController.php
+│   │       └── index.php     # API documentation page
+│   ├── Models/               # Data models
+│   │   ├── Product.php
+│   │   └── Post.php
+│   ├── Views/
+│   │   ├── JsonView.php      # JSON response formatter
+│   │   └── 404.php           # Error page
+│   ├── Schema/
+│   │   └── DBSchema.php      # Database schema definitions
+│   └── helpers/
+│       └── functions.php     # Utility functions
+├── bootstrap/
+│   └── app.php               # Application bootstrap
+├── config/
+│   └── database.php          # Database configuration
+├── data/                     # Mock data generators
+├── public/                   # Web server document root
+│   ├── index.php            # Application entry point
+│   ├── favicon.ico          # Site favicon
+│   └── robots.txt           # SEO configuration
+├── routes/
+│   └── api.php              # API route definitions
+├── storage/                 # Application storage
+├── tests/                   # Test suite
+│   ├── Feature/             # Feature tests
+│   ├── Unit/                # Unit tests
+│   └── TestCase.php         # Base test class
+├── vendor/                  # Composer dependencies
+├── .env                     # Environment variables
+├── .htaccess               # Apache configuration
+├── composer.json           # Composer configuration
+└── run-tests.php           # Custom test runner
 ```
 
-## 🛠️ Installation
+## 🛠️ Development Setup
 
 ### Prerequisites
 
-- PHP 8.0 or higher
+- PHP 8.1 or higher
 - MySQL/MariaDB
 - Composer
 - Web server (Apache/Nginx) or PHP built-in server
 
-### Setup
+### Local Installation
 
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
-   cd commercio
+   git clone https://github.com/ashikrnhq04/producntuserAPI.git
+   cd producntuserAPI
    ```
 
 2. **Install dependencies**
@@ -64,179 +182,147 @@ commercio/
    composer install
    ```
 
-3. **Configure database**
+3. **Set up environment**
 
-   - Update `config.php` with your database credentials
-
-   ```php
-   return [
-       "database" => [
-           "dbname" => "your_database_name",
-           "host" => "localhost",
-           "port" => "3306",
-           "charset" => "utf8mb4"
-       ]
-   ];
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database credentials
    ```
 
-4. **Start the development server**
+4. **Configure database**
+
+   ```env
+   DB_HOST=localhost
+   DB_NAME=your_database_name
+   DB_USER=your_username
+   DB_PASS=your_password
+   APP_KEY=your_app_key_here
+   ```
+
+5. **Start development server**
 
    ```bash
    php -S localhost:8000 -t public
    ```
 
-5. **Access the application**
+6. **Access the application**
+   - API Documentation: `http://localhost:8000`
    - API Base URL: `http://localhost:8000/api/v1/`
 
-## 🔗 API Endpoints
+## 🧪 Testing
 
-### Posts
-
-- `GET /api/v1/posts` - List all posts
-- `GET /api/v1/posts/{id}` - Get single post
-- `POST /api/v1/posts` - Create new post
-- `PATCH /api/v1/posts/{id}` - Update post
-- `DELETE /api/v1/posts/{id}` - Delete post
-
-### Products
-
-- `GET /api/v1/products` - List all products
-- `GET /api/v1/products/{id}` - Get single product
-- `POST /api/v1/products` - Create new product
-- `PATCH /api/v1/products/{id}` - Update product
-- `DELETE /api/v1/products/{id}` - Delete product
-
-## 📝 API Usage Examples
-
-### Create a Post
+The project uses PestPHP for testing with a custom test runner for CI/CD compatibility.
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/posts \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "title=My First Post&content=This is the content&categories=technology,programming&image=https://placehold.co/1400x800/FF6B6B/FFFFFF"
+# Run all tests
+./run-tests.php
+
+# Run with Composer
+composer test
+
+# Run specific test suite
+./vendor/bin/pest tests/Feature/
+./vendor/bin/pest tests/Unit/
 ```
 
-### Create a Product
+### Test Coverage
 
-```bash
-curl -X POST http://localhost:8000/api/v1/products \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Wireless Headphones",
-    "description": "High-quality wireless headphones",
-    "price": 99.99,
-    "categories": "electronics,gadgets",
-    "image": "https://placehold.co/1400x800/4ECDC4/FFFFFF"
-  }'
-```
+- ✅ **Feature Tests** - API endpoint functionality
+- ✅ **Unit Tests** - Individual component testing
+- ✅ **Database Tests** - Database operations
+- ✅ **Model Tests** - Data model validation
 
-### Response Format
+## 🚀 Deployment
 
-```json
-{
-  "version": "1.0.0",
-  "status": "success",
-  "ok": true,
-  "data": [
-    {
-      "id": 1,
-      "title": "Sample Post",
-      "content": "Post content...",
-      "categories": ["technology", "programming"],
-      "image": "https://placehold.co/1400x800/FF6B6B/FFFFFF",
-      "url": "sample-post",
-      "created_at": "2025-01-01 12:00:00"
-    }
-  ]
-}
-```
+The project includes automated deployment via GitHub Actions to cPanel hosting.
 
-## 🏗️ Database Schema
+### GitHub Actions Workflow
 
-### Tables
+1. **Checkout** - Clone repository
+2. **Setup PHP** - Install PHP 8.3 and extensions
+3. **Install Dependencies** - Run `composer install`
+4. **Run Tests** - Execute test suite
+5. **Setup Environment** - Create production `.env`
+6. **Deploy** - SFTP upload to cPanel
 
-- **posts** - Blog posts/articles
-- **products** - E-commerce products
-- **categories** - Category definitions
-- **post_category** - Post-category relationships
-- **product_category** - Product-category relationships
+### Required GitHub Secrets
 
-### Key Features
+- `HOST` - cPanel hostname
+- `USERNAME` - cPanel username
+- `PASSWORD` - cPanel password
+- `APP_KEY` - Application encryption key
 
-- **Automatic table creation** - Tables are created automatically based on schema definitions
-- **Foreign key constraints** - Proper referential integrity
-- **Timestamps** - Automatic created_at and updated_at fields
-- **URL slugs** - SEO-friendly URLs for all content
+## 🏛️ Architecture
 
-## 🔧 Development Tools
+### Framework Features
 
-### Bulk Data Generation
+- **Custom MVC Framework** - Built from scratch with modern PHP
+- **Dependency Injection** - Service container for loose coupling
+- **Database Abstraction** - Custom ORM-like query builder
+- **Request Validation** - Built-in validation system
+- **Middleware Support** - Authentication and request processing
+- **Schema Management** - Automated database table creation
 
-The project includes scripts for generating test data:
+### Design Patterns
 
-### Database Management
+- Model-View-Controller (MVC)
+- Dependency Injection
+- Repository Pattern
+- Factory Pattern
+- Strategy Pattern (test runner)
 
-- **Schema Manager** - Handles table creation and updates
-- **Migration System** - Version-controlled database changes
-- **Transaction Support** - ACID compliance for data operations
-
-## 🛡️ Security Features
+## � Security
 
 - **Input Validation** - Comprehensive request validation
-- **SQL Injection Prevention** - Prepared statements throughout
-- **Transaction Safety** - Automatic rollback on errors
-- **Error Handling** - Proper exception management
+- **SQL Injection Prevention** - Prepared statements
+- **XSS Protection** - Output escaping
+- **Environment Variables** - Secure configuration
+- **Error Handling** - Safe error responses
 
-## 📚 Core Components
+## � Performance
 
-### Database Class
-
-- Query builder with method chaining
-- Transaction management
-- Connection pooling
-- Error handling
-
-### Router System
-
-- RESTful routing
-- Parameter extraction
-- Middleware support
-- Error responses
-
-### Validation System
-
-- Rule-based validation
-- Custom validators
-- Error message handling
-- Sanitization
+- **Optimized Queries** - Efficient database operations
+- **Pagination** - Memory-efficient data loading
+- **Caching Headers** - Browser caching support
+- **Lightweight Framework** - Minimal overhead
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🔮 Future Enhancements
+## 🔮 Roadmap
 
-- [ ] Authentication system (JWT/OAuth)
-- [ ] File upload handling
-- [ ] Caching layer (Redis/Memcached)
+### Completed ✅
+
+- [x] Core API endpoints (Products & Posts)
+- [x] Pagination system
+- [x] Database abstraction layer
+- [x] Test suite with PestPHP
+- [x] GitHub Actions CI/CD
+- [x] Professional API documentation
+- [x] Error handling and validation
+
+### Planned 🚧
+
 - [ ] API rate limiting
-- [ ] Documentation generator
-- [ ] Unit test suite
+- [ ] Authentication system (JWT/OAuth)
+- [ ] Caching layer (Redis/Memcached)
+- [ ] File upload handling
+- [ ] API versioning
+- [ ] OpenAPI/Swagger documentation
 - [ ] Docker containerization
-- [ ] CI/CD pipeline
+- [ ] Performance monitoring
 
 ## 📞 Support
 
-For questions, issues, or contributions, please open an issue on GitHub or contact the development team.
-
----
-
-**Built with ❤️ using modern PHP practices and clean architecture principles.**
+- **Documentation**: [https://mockerjson.xyz](https://mockerjson.xyz)
+- **Issues**: [GitHub Issues](https://github.com/ashikrnhq04/producntuserAPI/issues)
+- **Email**: [ashikrn.hq04@gmail.com](mailto:ashikrn.hq04@gmail.com)
