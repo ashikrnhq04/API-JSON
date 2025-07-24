@@ -15,7 +15,7 @@ on:
           - staging
 
 env:
-  PHP_VERSION: "8.3"
+  PHP_VERSION: "8.2"
 
 jobs:
   # Job 1: Run tests before deployment
