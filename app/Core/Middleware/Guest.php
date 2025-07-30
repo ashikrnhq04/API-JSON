@@ -8,7 +8,6 @@ class Guest {
     public function handle() {
         // Logic for guest middleware
         if (isset($_SESSION['access']) && $_SESSION['access'] === 'guest') {
-            error_log("Guest access granted for user: " . $_SESSION['user']);
             return;
         }
         

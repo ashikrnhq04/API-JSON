@@ -63,6 +63,34 @@ class JsonView {
     }
     
     /**
+     * Send rate limited response
+     */
+    public static function rateLimited(string $message = 'Rate limit exceeded', array $rateInfo = []): void {
+        http_response_code(429);
+        header('Content-Type: application/json');
+        header('Access-Control-Allow-Origin: *');
+        
+        $response = [
+            'version' => '1.2.8',
+            'status' => 'error',
+            'ok' => false,
+            'message' => $message,
+            'errors' => []
+        ];
+        
+        if (!empty($rateInfo)) {
+            $response['rate_limit'] = [
+                'limit' => $rateInfo['limit'] ?? null,
+                'remaining' => $rateInfo['remaining'] ?? 0,
+                'reset_time' => $rateInfo['reset_time'] ?? null,
+                'retry_after' => $rateInfo['retry_after'] ?? null
+            ];
+        }
+        
+        echo json_encode($response);
+    }
+    
+    /**
      * Send success response with pagination
      */
     public static function successWithPagination($data, array $pagination = [], string $message = 'Success'): void {
