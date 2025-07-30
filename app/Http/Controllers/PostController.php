@@ -4,6 +4,8 @@ namespace Http\Controllers;
 
 use Models\Post;
 use Views\JsonView;
+use Core\Requests;
+use Core\Mimic;
 
 class PostController {
     
@@ -18,7 +20,7 @@ class PostController {
      */
     public function index(): void {
         try {
-            $limit = $_GET['limit'] ?? 50;
+            $limit = $_GET['limit'] ?? 20; // Increased default to 20
             $offset = $_GET['offset'] ?? 0;
             $categoryId = $_GET['category_id'] ?? null;
             
@@ -51,14 +53,34 @@ class PostController {
     }
     
     /**
-     * Get a single post by ID or URL slug
+     * Get a single post by ID
      */
-    public function showBySlug(string $identifier): void {
+    public function show(int $id): void {
         try {
-            $post = $this->postModel->findBySlug($identifier);
+            $post = $this->postModel->findById($id);
             
             if (!$post) {
-                JsonView::notFound('Post not found');
+                JsonView::notFound('No post found with the specified ID');
+                return;
+            }
+            
+            JsonView::success($post, 'Post retrieved successfully');
+            
+        } catch (Exception $e) {
+            error_log("Error in PostController::show: " . $e->getMessage());
+            JsonView::error('Failed to retrieve post', 500);
+        }
+    }
+    
+    /**
+     * Get a single post by URL slug
+     */
+    public function showBySlug(string $slug): void {
+        try {
+            $post = $this->postModel->findBySlug($slug);
+            
+            if (!$post) {
+                JsonView::notFound('No post found with the specified identifier');
                 return;
             }
             
@@ -75,11 +97,30 @@ class PostController {
      */
     public function create(): void {
         try {
-            // Parse JSON input
-            $input = json_decode(file_get_contents('php://input'), true);
-            
+            $input = Requests::all();
+
             if (!$input) {
                 JsonView::validationError(['input' => 'Invalid JSON data']);
+                return;
+            }
+
+            // Validate required fields
+            Requests::validate([
+                'title' => 'required|string|min:2|max:255',
+                'content' => 'required|string|min:5|max:10000',
+                'image' => 'required|url',
+                'categories' => 'string',
+            ]);
+
+            if (Requests::fails()) {
+                JsonView::validationError(Requests::errors(), 'Validation failed');
+                return;
+            }
+            
+            // Production environment mimic response
+            if ($_ENV['APP_ENV'] === 'production') {
+                $mockPost = Mimic::generateMockPost($input);
+                JsonView::success($mockPost, 'Post created successfully', 201);
                 return;
             }
             
@@ -99,30 +140,42 @@ class PostController {
     }
     
     /**
-     * Update an existing post by ID or slug
+     * Update an existing post by ID or slug (PATCH)
      */
-    public function updateBySlug(string $identifier): void {
+    public function patchUpdate(string $identifier): void {
         try {
-            // Check if post exists using slug method (handles both ID and slug)
             $existingPost = $this->postModel->findBySlug($identifier);
             if (!$existingPost) {
-                JsonView::notFound('Post not found');
+                JsonView::notFound('No post found with the specified identifier');
                 return;
             }
             
-            // Parse JSON input
-            $input = json_decode(file_get_contents('php://input'), true);
+            $input = Requests::all();
+
+            // Validate fields (optional for PATCH)
+            Requests::validate([
+                'title' => 'string|min:2|max:255',
+                'content' => 'string|min:5|max:10000',
+                'image' => 'url',
+                'categories' => 'string',
+            ]);
             
-            if (!$input) {
-                JsonView::validationError(['input' => 'Invalid JSON data']);
+            if (Requests::fails()) {
+                JsonView::validationError(Requests::errors(), 'Validation failed');
                 return;
             }
-            
-            // Update the post using the model (needs post ID)
+
+            // Production environment mimic response
+            if ($_ENV['APP_ENV'] === 'production') {
+                $mockPost = Mimic::generateMockPost(array_merge($existingPost, $input));
+                JsonView::success($mockPost, 'Post updated successfully');
+                return;
+            }
+
+            // Update the post using the model
             $result = $this->postModel->update($existingPost['id'], $input);
             
             if ($result) {
-                // Get updated post
                 $updatedPost = $this->postModel->findById($existingPost['id']);
                 JsonView::success($updatedPost, 'Post updated successfully');
             } else {
@@ -130,7 +183,56 @@ class PostController {
             }
             
         } catch (Exception $e) {
-            error_log("Error in PostController::updateBySlug: " . $e->getMessage());
+            error_log("Error in PostController::patchUpdate: " . $e->getMessage());
+            JsonView::error('Failed to update post', 500);
+        }
+    }
+
+    /**
+     * Update an existing post by ID or slug (PUT)
+     */
+    public function putUpdate(string $identifier): void {
+        try {
+            $existingPost = $this->postModel->findBySlug($identifier);
+            if (!$existingPost) {
+                JsonView::notFound('No post found with the specified identifier');
+                return;
+            }
+            
+            $input = Requests::all();
+
+            // Validate required fields (all required for PUT)
+            Requests::validate([
+                'title' => 'required|string|min:2|max:255',
+                'content' => 'required|string|min:5|max:10000',
+                'image' => 'required|url',
+                'categories' => 'string',
+            ]);
+            
+            if (Requests::fails()) {
+                JsonView::validationError(Requests::errors(), 'Validation failed');
+                return;
+            }
+
+            // Production environment mimic response
+            if ($_ENV['APP_ENV'] === 'production') {
+                $mockPost = Mimic::generateMockPost($input);
+                JsonView::success($mockPost, 'Post updated successfully');
+                return;
+            }
+
+            // Update the post using the model
+            $result = $this->postModel->update($existingPost['id'], $input);
+            
+            if ($result) {
+                $updatedPost = $this->postModel->findById($existingPost['id']);
+                JsonView::success($updatedPost, 'Post updated successfully');
+            } else {
+                JsonView::error('Failed to update post', 500);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error in PostController::putUpdate: " . $e->getMessage());
             JsonView::error('Failed to update post', 500);
         }
     }
@@ -140,14 +242,19 @@ class PostController {
      */
     public function destroyBySlug(string $identifier): void {
         try {
-            // Check if post exists using slug method (handles both ID and slug)
             $existingPost = $this->postModel->findBySlug($identifier);
             if (!$existingPost) {
-                JsonView::notFound('Post not found');
+                JsonView::notFound('No post found with the specified identifier');
                 return;
             }
             
-            // Delete the post using the model (needs post ID)
+            // Production environment mimic response
+            if ($_ENV['APP_ENV'] === 'production') {
+                JsonView::success(null, 'Post deleted successfully');
+                return;
+            }
+            
+            // Delete the post using the model
             $success = $this->postModel->delete($existingPost['id']);
             
             if ($success) {

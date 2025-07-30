@@ -5,11 +5,10 @@ use Core\Validator;
 
 class Requests {
 
-    private array $data;
-    
-    private ?Validator $validator = null;
+    private static array $data = [];
+    private static ?Validator $validator = null;
 
-    public function __construct()
+    public static function initialize(): void
     {
         $contentType = $_SERVER['CONTENT_TYPE'] ?? "";
         
@@ -30,32 +29,76 @@ class Requests {
             ]);
         }
         
-        $this->data = array_map('h', $input);
+        self::$data = array_map('h', $input);
     }
 
-    public function all(): array
+    public static function all(): array
     {
-        return $this->data;
+        if (empty(self::$data)) {
+            self::initialize();
+        }
+        
+        return self::$data;
     }
 
-    public function validate(array $rules): self
+    public static function validate(array $rules): void
     {
-        $this->validator = new Validator($this->data, $rules);
-        return $this;
+        if (empty(self::$data)) {
+            self::initialize();
+        }
+        
+        self::$validator = new Validator(self::$data, $rules);
     }
 
-    public function fails(): bool
+    public static function fails(): bool
     {
-        return !$this->validator?->passes();
+        return !self::$validator?->passes() ?? true;
     }
 
-    public function errors(): array
+    public static function errors(): array
     {
-        return $this->validator?->errors() ?? [];
+        return self::$validator?->errors() ?? [];
     }
 
-    public static function make(): self
+    public static function get(string $key, $default = null)
     {
-        return new self();
+        if (empty(self::$data)) {
+            self::initialize();
+        }
+        
+        return self::$data[$key] ?? $default;
+    }
+
+    public static function has(string $key): bool
+    {
+        if (empty(self::$data)) {
+            self::initialize();
+        }
+        
+        return isset(self::$data[$key]);
+    }
+
+    public static function only(array $keys): array
+    {
+        if (empty(self::$data)) {
+            self::initialize();
+        }
+        
+        return array_intersect_key(self::$data, array_flip($keys));
+    }
+
+    public static function except(array $keys): array
+    {
+        if (empty(self::$data)) {
+            self::initialize();
+        }
+        
+        return array_diff_key(self::$data, array_flip($keys));
+    }
+
+    public static function reset(): void
+    {
+        self::$data = [];
+        self::$validator = null;
     }
 }

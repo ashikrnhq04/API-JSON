@@ -3,6 +3,7 @@
 namespace Core;
 
 use Core\Middleware\Middleware;
+use Views\JsonView as JSON;
 
 class Router {
     protected $routes = []; 
@@ -111,12 +112,7 @@ class Router {
     }
 
     public function abort($status = 404) {
-        http_response_code($status);
-        header('Content-type: application/json');
-        header('Access-Control-Allow-Origin: *');
-
-        echo json_encode((object)[], JSON_PRETTY_PRINT);
-        
+        JSON::error($status);        
         die();
     }
 

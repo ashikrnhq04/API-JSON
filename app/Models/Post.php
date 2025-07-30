@@ -16,25 +16,17 @@ class Post {
      * Create a new post
      */
     public function create(array $data): array {
-        // Business rules validation
-        $this->validatePostData($data);
+        // Pick only necessary fields
+        $postData = array_intersect_key($data, array_flip([
+            "title", "content", "image"
+        ]));
+
+        $postData['url'] = toSlug($postData['title']);
+        $postData['status'] = 'active';
         
-                // Prepare data for database
-        $postData = [
-            'title' => $data['title'],
-            'content' => $data['content'],
-            'image' => $data['image'],
-            'url' => toSlug($data['title'])
-        ];
-        
-        // Start transaction
-        $transactionStarted = $this->db->beginTransaction();
-        if (!$transactionStarted) {
-            throw new \Exception("Failed to start database transaction");
-        }
+        $this->db->beginTransaction();
         
         try {
-            // Insert post
             $this->db->insert('posts', $postData);
             $postId = $this->db->lastInsertId();
             
@@ -43,22 +35,19 @@ class Post {
             }
             
             // Handle categories if provided
-            if (!empty($data['category_ids'])) {
-                $this->attachCategories($postId, $data['category_ids']);
+            if (!empty($data['categories'])) {
+                $this->attachCategories($postId, $data['categories']);
             }
             
             $this->db->commit();
-            $post = $this->findById($postId);
             
             return [
                 'success' => true,
-                'post' => $post
+                'post' => $this->findById($postId)
             ];
             
         } catch (\Exception $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
+            $this->db->rollBack();
             throw $e;
         }
     }
@@ -67,79 +56,40 @@ class Post {
      * Find post by ID
      */
     public function findById(int $id): ?array {
-        $sql = "SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
-                FROM posts p
-                LEFT JOIN post_category pc ON p.id = pc.post_id
-                LEFT JOIN categories c ON c.id = pc.category_id 
-                WHERE p.id = :id
-                GROUP BY p.id LIMIT 1";
-
-        $this->db->query($sql)->execute(['id' => $id]);
-        $result = $this->db->fetch();
+        $post = $this->db->find('posts', (string)$id);
         
-        if (!$result) {
+        if (!$post) {
             return null;
         }
-
-        $result['categories'] = !empty($result['categories']) 
-            ? array_map('trim', explode(',', $result['categories']))
-            : [];
-
-        return $result;
+        
+        $post['categories'] = $this->getPostCategories($id);
+        return $post;
     }
     
     /**
      * Find post by slug
      */
     public function findBySlug(string $slug): ?array {
-        $column = ctype_digit($slug) ? "id" : "url";
-
-        $sql = "SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
-                FROM posts p
-                LEFT JOIN post_category pc ON p.id = pc.post_id
-                LEFT JOIN categories c ON c.id = pc.category_id 
-                WHERE p.`{$column}` = :{$column}
-                GROUP BY p.id LIMIT 1";
-
-        $this->db->query($sql)->execute([$column => $slug]);
-        $result = $this->db->fetch();
+        $post = $this->db->find('posts', $slug);
         
-        if (!$result) {
+        if (!$post) {
             return null;
         }
-
-        $result['categories'] = !empty($result['categories']) 
-            ? array_map('trim', explode(',', $result['categories']))
-            : [];
-
-        return $result;
+        
+        $post['categories'] = $this->getPostCategories($post['id']);
+        return $post;
     }
     
     /**
      * Get all posts with categories
      */
     public function getAllWithCategories(int $limit = 50, int $offset = 0): array {
-        $sql = "
-            SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
-            FROM posts p
-            LEFT JOIN post_category pc ON p.id = pc.post_id
-            LEFT JOIN categories c ON c.id = pc.category_id 
-            GROUP BY p.id 
-            ORDER BY p.id ASC
-            LIMIT {$limit} OFFSET {$offset}
-        ";
+        $sql = "SELECT * FROM posts WHERE status = 'active' ORDER BY id ASC LIMIT {$limit} OFFSET {$offset}";
         
         $this->db->query($sql)->execute([]);
         $posts = $this->db->fetchAll();
         
-        // Process categories for each post
-        foreach ($posts as &$post) {
-            $post['categories'] = !empty($post['categories']) 
-                ? array_map('trim', explode(',', $post['categories']))
-                : [];
-        }
-        
-        return $posts;
+        return $this->attachCategoriesToPosts($posts);
     }
     
     /**
@@ -147,17 +97,12 @@ class Post {
      */
     public function getTotalCount(?int $categoryId = null): int {
         if ($categoryId !== null) {
-            $sql = "
-                SELECT COUNT(DISTINCT p.id) as count
-                FROM posts p
-                LEFT JOIN post_category pc ON p.id = pc.post_id
-                LEFT JOIN categories c ON pc.category_id = c.id
-                WHERE c.id = :category_id
-            ";
-            
+            $sql = "SELECT COUNT(DISTINCT p.id) as count FROM posts p 
+                    INNER JOIN post_category pc ON p.id = pc.post_id 
+                    WHERE p.status = 'active' AND pc.category_id = :category_id";
             $this->db->query($sql)->execute(['category_id' => $categoryId]);
         } else {
-            $sql = "SELECT COUNT(*) as count FROM posts";
+            $sql = "SELECT COUNT(*) as count FROM posts WHERE status = 'active'";
             $this->db->query($sql)->execute([]);
         }
         
@@ -169,8 +114,130 @@ class Post {
      * Update post
      */
     public function update(int $id, array $data): bool {
-        $this->validatePostData($data, false); // false = not all fields required for update
+        $updateData = $this->prepareUpdateData($data);
+        $hasCategories = array_key_exists('categories', $data);
         
+        // Use transaction only if updating categories
+        if ($hasCategories) {
+            $this->db->beginTransaction();
+        }
+        
+        try {
+            // Update post fields if any
+            if (!empty($updateData)) {
+                $updateData['updated_at'] = date('Y-m-d H:i:s');
+                $updateData['id'] = $id;
+                
+                $setClause = implode(", ", array_map(fn($key) => "`{$key}` = :{$key}", array_keys($updateData)));
+                $sql = "UPDATE posts SET {$setClause} WHERE id = :id";
+                
+                $this->db->query($sql)->execute($updateData);
+            }
+            
+            // Handle category updates if provided
+            if ($hasCategories) {
+                $this->updatePostCategories($id, $data['categories']);
+                $this->db->commit();
+            }
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            if ($hasCategories) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+    
+    /**
+     * Get posts by category
+     */
+    public function getByCategory(int $categoryId, int $limit = 50, int $offset = 0): array {
+        $sql = "SELECT p.* FROM posts p 
+                INNER JOIN post_category pc ON p.id = pc.post_id 
+                WHERE p.status = 'active' AND pc.category_id = :category_id 
+                ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}";
+        
+        $this->db->query($sql)->execute(['category_id' => $categoryId]);
+        $posts = $this->db->fetchAll();
+        
+        return $this->attachCategoriesToPosts($posts);
+    }
+
+    /**
+     * Delete post
+     */
+    public function delete(int $id): bool {
+        $this->db->beginTransaction();
+        
+        try {
+            $this->db->query("DELETE FROM post_category WHERE post_id = :id")->execute(['id' => $id]);
+            $this->db->query("DELETE FROM posts WHERE id = :id")->execute(['id' => $id]);
+            
+            $this->db->commit();
+            return true;
+            
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+    
+    // ========== PRIVATE HELPER METHODS ==========
+    
+    /**
+     * Get categories for a specific post
+     */
+    private function getPostCategories(int $postId): array {
+        $sql = "SELECT c.name FROM categories c 
+                INNER JOIN post_category pc ON c.id = pc.category_id 
+                WHERE pc.post_id = :post_id ORDER BY c.name";
+        
+        $this->db->query($sql)->execute(['post_id' => $postId]);
+        $categories = $this->db->fetchAll();
+        
+        return array_column($categories, 'name');
+    }
+    
+    /**
+     * Attach categories to multiple posts efficiently
+     */
+    private function attachCategoriesToPosts(array $posts): array {
+        if (empty($posts)) {
+            return $posts;
+        }
+        
+        $postIds = array_column($posts, 'id');
+        $placeholders = implode(',', array_fill(0, count($postIds), '?'));
+        
+        $sql = "SELECT pc.post_id, c.name 
+                FROM post_category pc 
+                INNER JOIN categories c ON pc.category_id = c.id 
+                WHERE pc.post_id IN ({$placeholders})
+                ORDER BY c.name";
+        
+        $this->db->query($sql)->execute($postIds);
+        $categoryData = $this->db->fetchAll();
+        
+        // Group categories by post_id
+        $categoriesByPost = [];
+        foreach ($categoryData as $row) {
+            $categoriesByPost[$row['post_id']][] = $row['name'];
+        }
+        
+        // Attach categories to posts
+        foreach ($posts as &$post) {
+            $post['categories'] = $categoriesByPost[$post['id']] ?? [];
+        }
+        
+        return $posts;
+    }
+    
+    /**
+     * Prepare update data from input
+     */
+    private function prepareUpdateData(array $data): array {
         $updateData = [];
         
         if (isset($data['title'])) {
@@ -183,147 +250,30 @@ class Post {
         if (isset($data['image'])) {
             $updateData['image'] = $data['image'];
         }
-        
-        if (empty($updateData)) {
-            return true; // Nothing to update
+        if (isset($data['status'])) {
+            $updateData['status'] = $data['status'];
         }
         
-        $updateData['updated_at'] = date('Y-m-d H:i:s');
-        
-        // Build update SQL query
-        $setClause = implode(", ", array_map(fn($key) => "`{$key}` = :{$key}", array_keys($updateData)));
-        $sql = "UPDATE `posts` SET {$setClause} WHERE `id` = :id";
-        
-        // Add the ID to the parameters
-        $updateData['id'] = $id;
-        
-        $this->db->query($sql)->execute($updateData);
-        
-        return true; // Assume success if no exception thrown
+        return $updateData;
     }
     
     /**
-     * Get posts by category with pagination
-     */
-    public function getByCategory(int $categoryId, int $limit = 50, int $offset = 0): array {
-        try {
-            $sql = "
-                SELECT p.*, GROUP_CONCAT(c2.name SEPARATOR ', ') AS categories
-                FROM posts p
-                LEFT JOIN post_category pc ON p.id = pc.post_id
-                LEFT JOIN categories c ON pc.category_id = c.id
-                LEFT JOIN post_category pc2 ON p.id = pc2.post_id
-                LEFT JOIN categories c2 ON pc2.category_id = c2.id
-                WHERE c.id = :category_id
-                GROUP BY p.id
-                ORDER BY p.created_at DESC
-                LIMIT {$limit} OFFSET {$offset}
-            ";
-            
-            $this->db->query($sql)->execute([
-                'category_id' => $categoryId
-            ]);
-            
-            $posts = $this->db->fetchAll();
-            
-            // Process categories for each post
-            foreach ($posts as &$post) {
-                $post['categories'] = !empty($post['categories']) 
-                    ? array_map('trim', explode(',', $post['categories']))
-                    : [];
-            }
-            
-            return $posts;
-            
-        } catch (Exception $e) {
-            error_log("Error in Post::getByCategory: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Delete a post and its relationships
-     */
-    public function delete(int $id): bool {
-        // Start transaction to ensure data consistency
-        $transactionStarted = $this->db->beginTransaction();
-        if (!$transactionStarted) {
-            throw new \Exception("Failed to start database transaction");
-        }
-        
-        try {
-            // First delete category relationships
-            $deleteCategoriesSql = "DELETE FROM `post_category` WHERE `post_id` = :post_id";
-            $this->db->query($deleteCategoriesSql)->execute(['post_id' => $id]);
-            
-            // Then delete the post
-            $deletePostSql = "DELETE FROM `posts` WHERE `id` = :id";
-            $this->db->query($deletePostSql)->execute(['id' => $id]);
-            
-            $this->db->commit();
-            return true;
-            
-        } catch (\Exception $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            throw $e;
-        }
-    }
-    
-    /**
-     * Business logic validation
-     */
-    private function validatePostData(array $data, bool $allRequired = true): void {
-        if ($allRequired) {
-            if (empty($data['title'])) {
-                throw new \InvalidArgumentException("Post title is required");
-            }
-            if (empty($data['content'])) {
-                throw new \InvalidArgumentException("Post content is required");
-            }
-            if (empty($data['image'])) {
-                throw new \InvalidArgumentException("Post image is required");
-            }
-        }
-        
-        // Validate individual fields if provided
-        if (isset($data['image']) && !filter_var($data['image'], FILTER_VALIDATE_URL)) {
-            throw new \InvalidArgumentException("Post image must be a valid URL");
-        }
-        
-        if (isset($data['title']) && strlen(trim($data['title'])) < 2) {
-            throw new \InvalidArgumentException("Post title must be at least 2 characters");
-        }
-        
-        if (isset($data['content']) && strlen(trim($data['content'])) < 10) {
-            throw new \InvalidArgumentException("Post content must be at least 10 characters");
-        }
-    }
-    
-    /**
-     * Handle category attachment (business logic)
+     * Handle category attachment 
      */
     private function attachCategories(int $postId, $categories): void {
-        if (empty($categories)) {
+        if (empty($categories) || (is_string($categories) && trim($categories) === '')) {
             return;
         }
         
-        // Handle both array of IDs and comma-separated string of names
-        if (is_string($categories)) {
-            // Legacy: comma-separated category names
-            $categoryNames = array_filter(array_map('trim', explode(',', $categories)));
-            foreach ($categoryNames as $categoryName) {
-                if (empty($categoryName)) {
-                    continue;
-                }
+        $categoryNames = is_string($categories) 
+            ? array_filter(array_map('trim', explode(',', $categories)))
+            : array_filter($categories);
+        
+        foreach ($categoryNames as $categoryName) {
+            $categoryName = trim($categoryName);
+            if (!empty($categoryName)) {
                 $categoryId = $this->getOrCreateCategory($categoryName);
                 $this->linkPostToCategory($postId, $categoryId);
-            }
-        } elseif (is_array($categories)) {
-            // New: array of category IDs
-            foreach ($categories as $categoryId) {
-                $this->linkPostToCategory($postId, (int)$categoryId);
             }
         }
     }
@@ -332,21 +282,17 @@ class Post {
      * Link post to category (avoid duplicates)
      */
     private function linkPostToCategory(int $postId, int $categoryId): void {
-        // Check if the relationship already exists
         $existing = $this->db->select("post_category", ["post_id"], [
             "post_id" => $postId,
             "category_id" => $categoryId
         ]);
-
-        if (!empty($existing)) {
-            return;
+        
+        if (empty($existing)) {
+            $this->db->insert("post_category", [
+                "post_id" => $postId,
+                "category_id" => $categoryId
+            ]);
         }
-
-        // Only insert if the relationship doesn't exist
-        $this->db->insert("post_category", [
-            "post_id" => $postId,
-            "category_id" => $categoryId
-        ]);
     }
     
     /**
@@ -355,7 +301,6 @@ class Post {
     private function getOrCreateCategory(string $name): int {
         $categoryName = strtolower(trim($name));
         
-        // Use select method to search by name
         $existing = $this->db->select("categories", ["id"], ["name" => $categoryName]);
         
         if (!empty($existing)) {
@@ -368,5 +313,19 @@ class Post {
         ]);
         
         return (int) $this->db->lastInsertId();
+    }
+    
+    /**
+     * Update post categories
+     */
+    private function updatePostCategories(int $postId, $categories): void {
+        // Remove existing associations
+        $this->db->query("DELETE FROM post_category WHERE post_id = :post_id")
+                 ->execute(['post_id' => $postId]);
+        
+        // Add new associations
+        if (!empty($categories)) {
+            $this->attachCategories($postId, $categories);
+        }
     }
 }

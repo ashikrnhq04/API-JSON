@@ -114,7 +114,12 @@ class Database {
             throw new \InvalidArgumentException("Table name cannot be empty.");
         }
 
-        $columnsSql = implode(", ", array_map(fn($col) => "`{$col}`", $columns));
+        // Handle asterisk specially - don't quote it
+        if ($columns === ["*"] || (count($columns) === 1 && $columns[0] === "*")) {
+            $columnsSql = "*";
+        } else {
+            $columnsSql = implode(", ", array_map(fn($col) => "`{$col}`", $columns));
+        }
 
         if (empty($conditions)) {
             $sql = "SELECT {$columnsSql} FROM `{$table}`";

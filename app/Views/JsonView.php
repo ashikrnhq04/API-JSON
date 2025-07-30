@@ -49,7 +49,17 @@ class JsonView {
      * Send not found response
      */
     public static function notFound(string $message = 'Resource not found'): void {
-        self::error($message, 404);
+        http_response_code(200);
+        header('Content-Type: application/json');
+        header('Access-Control-Allow-Origin: *');
+        
+        echo json_encode([
+            'version' => '1.2.8',
+            'status' => 'success',
+            'ok' => true,
+            'message' => $message,
+            'data' => null
+        ]);
     }
     
     /**

@@ -4,6 +4,8 @@ namespace Http\Controllers;
 
 use Models\Product;
 use Views\JsonView;
+use Core\Requests;
+use Core\Mimic;
 
 class ProductController {
     
@@ -18,7 +20,7 @@ class ProductController {
      */
     public function index(): void {
         try {
-            $limit = $_GET['limit'] ?? 50; // Increased default to 50
+            $limit = $_GET['limit'] ?? 20; // Increased default to 20
             $offset = $_GET['offset'] ?? 0;
             $categoryId = $_GET['category_id'] ?? null;
             
@@ -58,7 +60,7 @@ class ProductController {
             $product = $this->productModel->findById($id);
             
             if (!$product) {
-                JsonView::notFound('Product not found');
+                JsonView::notFound('No product found with the specified ID');
                 return;
             }
             
@@ -78,7 +80,7 @@ class ProductController {
             $product = $this->productModel->findBySlug($slug);
             
             if (!$product) {
-                JsonView::notFound('Product not found');
+                JsonView::notFound('No product found with the specified identifier');
                 return;
             }
             
@@ -95,11 +97,31 @@ class ProductController {
      */
     public function create(): void {
         try {
-            // Parse JSON input
-            $input = json_decode(file_get_contents('php://input'), true);
-            
+            $input = Requests::all();
+
             if (!$input) {
                 JsonView::validationError(['input' => 'Invalid JSON data']);
+                return;
+            }
+
+            // Validate required fields
+            Requests::validate([
+                'title' => 'required|string|min:2|max:255',
+                'description' => 'required|string|min:5|max:2000',
+                'price' => 'required|number',
+                'image' => 'required|url',
+                'categories' => 'string',
+            ]);
+
+            if (Requests::fails()) {
+                JsonView::validationError(Requests::errors(), 'Validation failed');
+                return;
+            }
+            
+            // Production environment mimic response
+            if ($_ENV['APP_ENV'] === 'production') {
+                $mockProduct = Mimic::generateMockProduct($input);
+                JsonView::success($mockProduct, 'Product created successfully', 201);
                 return;
             }
             
@@ -119,30 +141,43 @@ class ProductController {
     }
     
     /**
-     * Update an existing product by ID or slug
+     * Update an existing product by ID or slug (PATCH)
      */
-    public function updateBySlug(string $identifier): void {
+    public function patchUpdate(string $identifier): void {
         try {
-            // Check if product exists using slug method (handles both ID and slug)
             $existingProduct = $this->productModel->findBySlug($identifier);
             if (!$existingProduct) {
-                JsonView::notFound('Product not found');
+                JsonView::notFound('No product found with the specified identifier');
                 return;
             }
             
-            // Parse JSON input
-            $input = json_decode(file_get_contents('php://input'), true);
+            $input = Requests::all();
+
+            // Validate fields (optional for PATCH)
+            Requests::validate([
+                'title' => 'string|min:2|max:255',
+                'description' => 'string|min:5|max:2000',
+                'price' => 'number',
+                'image' => 'url',
+                'categories' => 'string',
+            ]);
             
-            if (!$input) {
-                JsonView::validationError(['input' => 'Invalid JSON data']);
+            if (Requests::fails()) {
+                JsonView::validationError(Requests::errors(), 'Validation failed');
                 return;
             }
-            
-            // Update the product using the model (needs product ID)
+
+            // Production environment mimic response
+            if ($_ENV['APP_ENV'] === 'production') {
+                $mockProduct = Mimic::generateMockProduct(array_merge($existingProduct, $input));
+                JsonView::success($mockProduct, 'Product updated successfully');
+                return;
+            }
+
+            // Update the product using the model
             $result = $this->productModel->update($existingProduct['id'], $input);
             
             if ($result) {
-                // Get updated product
                 $updatedProduct = $this->productModel->findById($existingProduct['id']);
                 JsonView::success($updatedProduct, 'Product updated successfully');
             } else {
@@ -150,7 +185,57 @@ class ProductController {
             }
             
         } catch (Exception $e) {
-            error_log("Error in ProductController::updateBySlug: " . $e->getMessage());
+            error_log("Error in ProductController::patchUpdate: " . $e->getMessage());
+            JsonView::error('Failed to update product', 500);
+        }
+    }
+
+    /**
+     * Update an existing product by ID or slug (PUT)
+     */
+    public function putUpdate(string $identifier): void {
+        try {
+            $existingProduct = $this->productModel->findBySlug($identifier);
+            if (!$existingProduct) {
+                JsonView::notFound('No product found with the specified identifier');
+                return;
+            }
+            
+            $input = Requests::all();
+
+            // Validate required fields (all required for PUT)
+            Requests::validate([
+                'title' => 'required|string|min:2|max:255',
+                'description' => 'required|string|min:5|max:2000',
+                'price' => 'required|number',
+                'image' => 'required|url',
+                'categories' => 'string',
+            ]);
+            
+            if (Requests::fails()) {
+                JsonView::validationError(Requests::errors(), 'Validation failed');
+                return;
+            }
+
+            // Production environment mimic response
+            if ($_ENV['APP_ENV'] === 'production') {
+                $mockProduct = Mimic::generateMockProduct($input);
+                JsonView::success($mockProduct, 'Product updated successfully');
+                return;
+            }
+
+            // Update the product using the model
+            $result = $this->productModel->update($existingProduct['id'], $input);
+            
+            if ($result) {
+                $updatedProduct = $this->productModel->findById($existingProduct['id']);
+                JsonView::success($updatedProduct, 'Product updated successfully');
+            } else {
+                JsonView::error('Failed to update product', 500);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error in ProductController::putUpdate: " . $e->getMessage());
             JsonView::error('Failed to update product', 500);
         }
     }
@@ -160,14 +245,19 @@ class ProductController {
      */
     public function destroyBySlug(string $identifier): void {
         try {
-            // Check if product exists using slug method (handles both ID and slug)
             $existingProduct = $this->productModel->findBySlug($identifier);
             if (!$existingProduct) {
-                JsonView::notFound('Product not found');
+                JsonView::notFound('No product found with the specified identifier');
                 return;
             }
             
-            // Delete the product using the model (needs product ID)
+            // Production environment mimic response
+            if ($_ENV['APP_ENV'] === 'production') {
+                JsonView::success(null, 'Product deleted successfully');
+                return;
+            }
+            
+            // Delete the product using the model
             $success = $this->productModel->delete($existingProduct['id']);
             
             if ($success) {

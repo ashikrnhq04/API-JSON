@@ -4,6 +4,7 @@ namespace Models;
 
 use Core\Database;
 use Core\App;
+use Core\Validator;
 
 class Product {
     private Database $db;
@@ -16,27 +17,17 @@ class Product {
      * Create a new product
      */
     public function create(array $data): array {
-        // Business rules validation
-        $this->validateProductData($data);
+        // Pick only necessary fields
+        $productData = array_intersect_key($data, array_flip([
+            "title", "description", "price", "image"
+        ]));
+
+        $productData['url'] = toSlug($productData['title']);
+        $productData['status'] = 'active';
         
-        // Prepare data for database
-        $productData = [
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'price' => (float) $data['price'],
-            'image' => $data['image'],
-            'url' => toSlug($data['title']),
-            'status' => 'active'
-        ];
-        
-        // Start transaction
-        $transactionStarted = $this->db->beginTransaction();
-        if (!$transactionStarted) {
-            throw new \Exception("Failed to start database transaction");
-        }
+        $this->db->beginTransaction();
         
         try {
-            // Insert product
             $this->db->insert('products', $productData);
             $productId = $this->db->lastInsertId();
             
@@ -45,22 +36,19 @@ class Product {
             }
             
             // Handle categories if provided
-            if (!empty($data['category_ids'])) {
-                $this->attachCategories($productId, $data['category_ids']);
+            if (!empty($data['categories'])) {
+                $this->attachCategories($productId, $data['categories']);
             }
             
             $this->db->commit();
-            $product = $this->findById($productId);
             
             return [
                 'success' => true,
-                'product' => $product
+                'product' => $this->findById($productId)
             ];
             
         } catch (\Exception $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
+            $this->db->rollBack();
             throw $e;
         }
     }
@@ -69,80 +57,40 @@ class Product {
      * Find product by ID
      */
     public function findById(int $id): ?array {
-        $sql = "SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
-                FROM products p
-                LEFT JOIN product_category pc ON p.id = pc.product_id
-                LEFT JOIN categories c ON c.id = pc.category_id 
-                WHERE p.id = :id
-                GROUP BY p.id LIMIT 1";
-
-        $this->db->query($sql)->execute(['id' => $id]);
-        $result = $this->db->fetch();
+        $product = $this->db->find('products', (string)$id);
         
-        if (!$result) {
+        if (!$product) {
             return null;
         }
-
-        $result['categories'] = !empty($result['categories']) 
-            ? array_map('trim', explode(',', $result['categories']))
-            : [];
-
-        return $result;
+        
+        $product['categories'] = $this->getProductCategories($id);
+        return $product;
     }
     
     /**
      * Find product by slug
      */
     public function findBySlug(string $slug): ?array {
-        $column = ctype_digit($slug) ? "id" : "url";
-
-        $sql = "SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
-                FROM products p
-                LEFT JOIN product_category pc ON p.id = pc.product_id
-                LEFT JOIN categories c ON c.id = pc.category_id 
-                WHERE p.`{$column}` = :{$column}
-                GROUP BY p.id LIMIT 1";
-
-        $this->db->query($sql)->execute([$column => $slug]);
-        $result = $this->db->fetch();
+        $product = $this->db->find('products', $slug);
         
-        if (!$result) {
+        if (!$product) {
             return null;
         }
-
-        $result['categories'] = !empty($result['categories']) 
-            ? array_map('trim', explode(',', $result['categories']))
-            : [];
-
-        return $result;
+        
+        $product['categories'] = $this->getProductCategories($product['id']);
+        return $product;
     }
     
     /**
      * Get all products with categories
      */
     public function getAllWithCategories(int $limit = 50, int $offset = 0): array {
-        $sql = "
-            SELECT p.*, GROUP_CONCAT(c.name SEPARATOR ', ') AS categories 
-            FROM products p
-            LEFT JOIN product_category pc ON p.id = pc.product_id
-            LEFT JOIN categories c ON c.id = pc.category_id 
-            WHERE p.status = 'active'
-            GROUP BY p.id 
-            ORDER BY p.id ASC
-            LIMIT {$limit} OFFSET {$offset}
-        ";
+        $sql = "SELECT * FROM products WHERE status = 'active' ORDER BY id ASC LIMIT {$limit} OFFSET {$offset}";
         
         $this->db->query($sql)->execute([]);
         $products = $this->db->fetchAll();
         
-        // Process categories for each product
-        foreach ($products as &$product) {
-            $product['categories'] = !empty($product['categories']) 
-                ? array_map('trim', explode(',', $product['categories']))
-                : [];
-        }
-        
-        return $products;
+        return $this->attachCategoriesToProducts($products);
     }
     
     /**
@@ -150,14 +98,9 @@ class Product {
      */
     public function getTotalCount(?int $categoryId = null): int {
         if ($categoryId !== null) {
-            $sql = "
-                SELECT COUNT(DISTINCT p.id) as count
-                FROM products p
-                LEFT JOIN product_category pc ON p.id = pc.product_id
-                LEFT JOIN categories c ON pc.category_id = c.id
-                WHERE c.id = :category_id AND p.status = 'active'
-            ";
-            
+            $sql = "SELECT COUNT(DISTINCT p.id) as count FROM products p 
+                    INNER JOIN product_category pc ON p.id = pc.product_id 
+                    WHERE p.status = 'active' AND pc.category_id = :category_id";
             $this->db->query($sql)->execute(['category_id' => $categoryId]);
         } else {
             $sql = "SELECT COUNT(*) as count FROM products WHERE status = 'active'";
@@ -172,8 +115,130 @@ class Product {
      * Update product
      */
     public function update(int $id, array $data): bool {
-        $this->validateProductData($data, false); // false = not all fields required for update
+        $updateData = $this->prepareUpdateData($data);
+        $hasCategories = array_key_exists('categories', $data);
         
+        // Use transaction only if updating categories
+        if ($hasCategories) {
+            $this->db->beginTransaction();
+        }
+        
+        try {
+            // Update product fields if any
+            if (!empty($updateData)) {
+                $updateData['updated_at'] = date('Y-m-d H:i:s');
+                $updateData['id'] = $id;
+                
+                $setClause = implode(", ", array_map(fn($key) => "`{$key}` = :{$key}", array_keys($updateData)));
+                $sql = "UPDATE products SET {$setClause} WHERE id = :id";
+                
+                $this->db->query($sql)->execute($updateData);
+            }
+            
+            // Handle category updates if provided
+            if ($hasCategories) {
+                $this->updateProductCategories($id, $data['categories']);
+                $this->db->commit();
+            }
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            if ($hasCategories) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+    
+    /**
+     * Get products by category
+     */
+    public function getByCategory(int $categoryId, int $limit = 50, int $offset = 0): array {
+        $sql = "SELECT p.* FROM products p 
+                INNER JOIN product_category pc ON p.id = pc.product_id 
+                WHERE p.status = 'active' AND pc.category_id = :category_id 
+                ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}";
+        
+        $this->db->query($sql)->execute(['category_id' => $categoryId]);
+        $products = $this->db->fetchAll();
+        
+        return $this->attachCategoriesToProducts($products);
+    }
+
+    /**
+     * Delete product
+     */
+    public function delete(int $id): bool {
+        $this->db->beginTransaction();
+        
+        try {
+            $this->db->query("DELETE FROM product_category WHERE product_id = :id")->execute(['id' => $id]);
+            $this->db->query("DELETE FROM products WHERE id = :id")->execute(['id' => $id]);
+            
+            $this->db->commit();
+            return true;
+            
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+    
+    // ========== PRIVATE HELPER METHODS ==========
+    
+    /**
+     * Get categories for a specific product
+     */
+    private function getProductCategories(int $productId): array {
+        $sql = "SELECT c.name FROM categories c 
+                INNER JOIN product_category pc ON c.id = pc.category_id 
+                WHERE pc.product_id = :product_id ORDER BY c.name";
+        
+        $this->db->query($sql)->execute(['product_id' => $productId]);
+        $categories = $this->db->fetchAll();
+        
+        return array_column($categories, 'name');
+    }
+    
+    /**
+     * Attach categories to multiple products efficiently
+     */
+    private function attachCategoriesToProducts(array $products): array {
+        if (empty($products)) {
+            return $products;
+        }
+        
+        $productIds = array_column($products, 'id');
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+        
+        $sql = "SELECT pc.product_id, c.name 
+                FROM product_category pc 
+                INNER JOIN categories c ON pc.category_id = c.id 
+                WHERE pc.product_id IN ({$placeholders})
+                ORDER BY c.name";
+        
+        $this->db->query($sql)->execute($productIds);
+        $categoryData = $this->db->fetchAll();
+        
+        // Group categories by product_id
+        $categoriesByProduct = [];
+        foreach ($categoryData as $row) {
+            $categoriesByProduct[$row['product_id']][] = $row['name'];
+        }
+        
+        // Attach categories to products
+        foreach ($products as &$product) {
+            $product['categories'] = $categoriesByProduct[$product['id']] ?? [];
+        }
+        
+        return $products;
+    }
+    
+    /**
+     * Prepare update data from input
+     */
+    private function prepareUpdateData(array $data): array {
         $updateData = [];
         
         if (isset($data['title'])) {
@@ -189,154 +254,30 @@ class Product {
         if (isset($data['image'])) {
             $updateData['image'] = $data['image'];
         }
-        
-        if (empty($updateData)) {
-            return true; // Nothing to update
+        if (isset($data['status'])) {
+            $updateData['status'] = $data['status'];
         }
         
-        $updateData['updated_at'] = date('Y-m-d H:i:s');
-        
-        // Build update SQL query
-        $setClause = implode(", ", array_map(fn($key) => "`{$key}` = :{$key}", array_keys($updateData)));
-        $sql = "UPDATE `products` SET {$setClause} WHERE `id` = :id";
-        
-        // Add the ID to the parameters
-        $updateData['id'] = $id;
-        
-        $this->db->query($sql)->execute($updateData);
-        
-        return true; // Assume success if no exception thrown
+        return $updateData;
     }
     
     /**
-     * Get products by category with pagination
-     */
-    public function getByCategory(int $categoryId, int $limit = 50, int $offset = 0): array {
-        try {
-            $sql = "
-                SELECT p.*, GROUP_CONCAT(c2.name SEPARATOR ', ') AS categories
-                FROM products p
-                LEFT JOIN product_category pc ON p.id = pc.product_id
-                LEFT JOIN categories c ON pc.category_id = c.id
-                LEFT JOIN product_category pc2 ON p.id = pc2.product_id
-                LEFT JOIN categories c2 ON pc2.category_id = c2.id
-                WHERE c.id = :category_id AND p.status = 'active'
-                GROUP BY p.id
-                ORDER BY p.created_at DESC
-                LIMIT {$limit} OFFSET {$offset}
-            ";
-            
-            $this->db->query($sql)->execute([
-                'category_id' => $categoryId
-            ]);
-            
-            $products = $this->db->fetchAll();
-            
-            // Process categories for each product
-            foreach ($products as &$product) {
-                $product['categories'] = !empty($product['categories']) 
-                    ? array_map('trim', explode(',', $product['categories']))
-                    : [];
-            }
-            
-            return $products;
-            
-        } catch (Exception $e) {
-            error_log("Error in Product::getByCategory: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Delete a product and its relationships
-     */
-    public function delete(int $id): bool {
-        // Start transaction to ensure data consistency
-        $transactionStarted = $this->db->beginTransaction();
-        if (!$transactionStarted) {
-            throw new \Exception("Failed to start database transaction");
-        }
-        
-        try {
-            // First delete category relationships
-            $deleteCategoriesSql = "DELETE FROM `product_category` WHERE `product_id` = :product_id";
-            $this->db->query($deleteCategoriesSql)->execute(['product_id' => $id]);
-            
-            // Then delete the product
-            $deleteProductSql = "DELETE FROM `products` WHERE `id` = :id";
-            $this->db->query($deleteProductSql)->execute(['id' => $id]);
-            
-            $this->db->commit();
-            return true;
-            
-        } catch (\Exception $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            throw $e;
-        }
-    }
-    
-    /**
-     * Business logic validation
-     */
-    private function validateProductData(array $data, bool $allRequired = true): void {
-        if ($allRequired) {
-            if (empty($data['title'])) {
-                throw new \InvalidArgumentException("Product title is required");
-            }
-            if (empty($data['description'])) {
-                throw new \InvalidArgumentException("Product description is required");
-            }
-            if (!isset($data['price']) || !is_numeric($data['price'])) {
-                throw new \InvalidArgumentException("Valid product price is required");
-            }
-            if (empty($data['image'])) {
-                throw new \InvalidArgumentException("Product image is required");
-            }
-        }
-        
-        // Validate individual fields if provided
-        if (isset($data['price']) && (!is_numeric($data['price']) || $data['price'] < 0)) {
-            throw new \InvalidArgumentException("Product price must be a positive number");
-        }
-        
-        if (isset($data['image']) && !filter_var($data['image'], FILTER_VALIDATE_URL)) {
-            throw new \InvalidArgumentException("Product image must be a valid URL");
-        }
-        
-        if (isset($data['title']) && strlen(trim($data['title'])) < 2) {
-            throw new \InvalidArgumentException("Product title must be at least 2 characters");
-        }
-        
-        if (isset($data['description']) && strlen(trim($data['description'])) < 5) {
-            throw new \InvalidArgumentException("Product description must be at least 5 characters");
-        }
-    }
-    
-    /**
-     * Handle category attachment (business logic)
+     * Handle category attachment 
      */
     private function attachCategories(int $productId, $categories): void {
-        if (empty($categories)) {
+        if (empty($categories) || (is_string($categories) && trim($categories) === '')) {
             return;
         }
         
-        // Handle both array of IDs and comma-separated string of names
-        if (is_string($categories)) {
-            // Legacy: comma-separated category names
-            $categoryNames = array_filter(array_map('trim', explode(',', $categories)));
-            foreach ($categoryNames as $categoryName) {
-                if (empty($categoryName)) {
-                    continue;
-                }
+        $categoryNames = is_string($categories) 
+            ? array_filter(array_map('trim', explode(',', $categories)))
+            : array_filter($categories);
+        
+        foreach ($categoryNames as $categoryName) {
+            $categoryName = trim($categoryName);
+            if (!empty($categoryName)) {
                 $categoryId = $this->getOrCreateCategory($categoryName);
                 $this->linkProductToCategory($productId, $categoryId);
-            }
-        } elseif (is_array($categories)) {
-            // New: array of category IDs
-            foreach ($categories as $categoryId) {
-                $this->linkProductToCategory($productId, (int)$categoryId);
             }
         }
     }
@@ -345,21 +286,17 @@ class Product {
      * Link product to category (avoid duplicates)
      */
     private function linkProductToCategory(int $productId, int $categoryId): void {
-        // Check if the relationship already exists
         $existing = $this->db->select("product_category", ["product_id"], [
             "product_id" => $productId,
             "category_id" => $categoryId
         ]);
-
-        if (!empty($existing)) {
-            return;
+        
+        if (empty($existing)) {
+            $this->db->insert("product_category", [
+                "product_id" => $productId,
+                "category_id" => $categoryId
+            ]);
         }
-
-        // Only insert if the relationship doesn't exist
-        $this->db->insert("product_category", [
-            "product_id" => $productId,
-            "category_id" => $categoryId
-        ]);
     }
     
     /**
@@ -368,7 +305,6 @@ class Product {
     private function getOrCreateCategory(string $name): int {
         $categoryName = strtolower(trim($name));
         
-        // Use select method to search by name
         $existing = $this->db->select("categories", ["id"], ["name" => $categoryName]);
         
         if (!empty($existing)) {
@@ -381,5 +317,34 @@ class Product {
         ]);
         
         return (int) $this->db->lastInsertId();
+    }
+    
+    /**
+     * Update product categories
+     */
+    private function updateProductCategories(int $productId, $categories): void {
+        // Remove existing associations
+        $this->db->query("DELETE FROM product_category WHERE product_id = :product_id")
+                 ->execute(['product_id' => $productId]);
+        
+        // Add new associations
+        if (!empty($categories)) {
+            $this->attachCategories($productId, $categories);
+        }
+    }
+
+    public function validate(array $data): array {
+        $validator = new Validator($data, [
+            'title' => 'required|string|min:2|max:255',
+            'description' => 'required|string|min:5|max:1000',
+            'price' => 'required|number',
+            'image' => 'required|url'
+        ]);
+        
+        if (!$validator->passes()) {
+            return $validator->errors();
+        }
+        
+        return [];
     }
 }

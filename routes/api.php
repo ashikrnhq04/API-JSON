@@ -3,80 +3,59 @@
 use Http\Controllers\ProductController;
 use Http\Controllers\PostController;
 
+$productController = new ProductController();
+$postController = new PostController();
+
 $router->get("/", function() {
     require BASE_PATH . "app/Http/Controllers/index.php";
 });
 
-// products routes - Using MVC Controller Pattern
-// GET
-$router->get("/api/v1/products", function() {
-    $controller = new ProductController();
-    $controller->index();
+// Products routes - Reuse the same instance
+$router->get("/api/v1/products", function() use ($productController) {
+    $productController->index();
 });
 
-$router->get("/api/v1/products/:identifier", function($identifier) {
-    $controller = new ProductController();
-    $controller->showBySlug($identifier);
+$router->get("/api/v1/products/:slug", function($slug) use ($productController) {
+    $productController->showBySlug($slug);
 });
 
-// POST
-$router->post("/api/v1/products", function() {
-    $controller = new ProductController();
-    $controller->create();
+$router->patch("/api/v1/products/:slug", function($slug) use ($productController) {
+    $productController->patchUpdate($slug);
 });
 
-// PATCH
-$router->patch("/api/v1/products/:identifier", function($identifier) {
-    $controller = new ProductController();
-    $controller->updateBySlug($identifier);
+$router->put("/api/v1/products/:slug", function($slug) use ($productController) {
+    $productController->putUpdate($slug);
 });
 
-// PUT
-$router->put("/api/v1/products/:identifier", function($identifier) {
-    $controller = new ProductController();
-    $controller->updateBySlug($identifier);
+$router->post("/api/v1/products", function() use ($productController) {
+    $productController->create();
 });
 
-// DELETE
-$router->delete("/api/v1/products/:identifier", function($identifier) {
-    $controller = new ProductController();
-    $controller->destroyBySlug($identifier);
+$router->delete("/api/v1/products/:slug", function($slug) use ($productController) {
+    $productController->destroyBySlug($slug);
 });
 
-
-
-// posts routes - Using MVC Controller Pattern
-// GET
-$router->get("/api/v1/posts", function() {
-    $controller = new PostController();
-    $controller->index();
+// Posts routes - Reuse the same instance
+$router->get("/api/v1/posts", function() use ($postController) {
+    $postController->index();
 });
 
-$router->get("/api/v1/posts/:identifier", function($identifier) {
-    $controller = new PostController();
-    $controller->showBySlug($identifier);
+$router->get("/api/v1/posts/:slug", function($slug) use ($postController) {
+    $postController->showBySlug($slug);
 });
 
-// POST
-$router->post("/api/v1/posts", function() {
-    $controller = new PostController();
-    $controller->create();
+$router->post("/api/v1/posts", function() use ($postController) {
+    $postController->create();
 });
 
-// PATCH
-$router->patch("/api/v1/posts/:identifier", function($identifier) {
-    $controller = new PostController();
-    $controller->updateBySlug($identifier);
+$router->patch("/api/v1/posts/:slug", function($slug) use ($postController) {
+    $postController->patchUpdate($slug);
 });
 
-// PUT
-$router->put("/api/v1/posts/:identifier", function($identifier) {
-    $controller = new PostController();
-    $controller->updateBySlug($identifier);
+$router->put("/api/v1/posts/:slug", function($slug) use ($postController) {
+    $postController->putUpdate($slug);
 });
 
-// DELETE
-$router->delete("/api/v1/posts/:identifier", function($identifier) {
-    $controller = new PostController();
-    $controller->destroyBySlug($identifier);
+$router->delete("/api/v1/posts/:slug", function($slug) use ($postController) {
+    $postController->destroyBySlug($slug);
 });
