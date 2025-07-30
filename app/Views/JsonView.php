@@ -4,6 +4,8 @@ namespace Views;
 
 class JsonView {
     
+
+    private static string $version = '1.3.2'; // Updated version
     /**
      * Send success response
      */
@@ -13,7 +15,7 @@ class JsonView {
         header('Access-Control-Allow-Origin: *');
         
         echo json_encode([
-            'version' => '1.2.8',
+            'version' => static::$version,
             'status' => 'success',
             'ok' => true,
             'message' => $message,
@@ -30,7 +32,7 @@ class JsonView {
         header('Access-Control-Allow-Origin: *');
         
         echo json_encode([
-            'version' => '1.2.8',
+            'version' => static::$version,
             'status' => 'error',
             'ok' => false,
             'message' => $message,
@@ -54,7 +56,7 @@ class JsonView {
         header('Access-Control-Allow-Origin: *');
         
         echo json_encode([
-            'version' => '1.2.8',
+            'version' => static::$version,
             'status' => 'success',
             'ok' => true,
             'message' => $message,
@@ -71,7 +73,7 @@ class JsonView {
         header('Access-Control-Allow-Origin: *');
         
         $response = [
-            'version' => '1.2.8',
+            'version' => static::$version,
             'status' => 'error',
             'ok' => false,
             'message' => $message,
@@ -99,7 +101,7 @@ class JsonView {
         header('Access-Control-Allow-Origin: *');
         
         echo json_encode([
-            'version' => '1.2.8',
+            'version' => static::$version,
             'status' => 'success',
             'ok' => true,
             'message' => $message,
