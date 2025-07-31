@@ -2,20 +2,7 @@
 
 [![Deploy to cPanel](https://github.com/ashikrnhq04/producntuserAPI/actions/workflows/deploy.yml/badge.svg)](https://github.com/ashikrnhq04/producntuserAPI/actions/workflows/deploy.yml)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://php.net)
-[![Live API](https://img.shields.io/badge## 🔒 Security
-## ⚡ Performance
-
-- **Optimized Queries** - Efficient database operations
-- **Pagination** - Memory-efficient data loading
-- **Rate Limiting** - Prevents server overload
-- **File-based Caching** - Fast rate limit checks
-- **Caching Headers** - Browser caching support
-- **Lightweight Framework** - Minimal overheadnput Validation** - Comprehensive request validation
-- **SQL Injection Prevention** - Prepared statements
-- **XSS Protection** - Output escaping
-- **Rate Limiting** - IP-based abuse prevention
-- **Environment Variables** - Secure configuration
-- **Error Handling** - Safe error responses0API-mockerjson.xyz-green.svg)](https://mockerjson.xyz)
+[![Live API](https://img.shields.io/badge/Live%20API-mockerjson.xyz-green.svg)](https://mockerjson.xyz)
 
 > **Free Mock Data REST API for Developers** - High-quality, realistic mock data for testing and development
 
