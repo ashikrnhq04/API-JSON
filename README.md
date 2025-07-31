@@ -2,7 +2,20 @@
 
 [![Deploy to cPanel](https://github.com/ashikrnhq04/producntuserAPI/actions/workflows/deploy.yml/badge.svg)](https://github.com/ashikrnhq04/producntuserAPI/actions/workflows/deploy.yml)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://php.net)
-[![Live API](https://img.shields.io/badge/Live%20API-mockerjson.xyz-green.svg)](https://mockerjson.xyz)
+[![Live API](https://img.shields.io/badge## 🔒 Security
+## ⚡ Performance
+
+- **Optimized Queries** - Efficient database operations
+- **Pagination** - Memory-efficient data loading
+- **Rate Limiting** - Prevents server overload
+- **File-based Caching** - Fast rate limit checks
+- **Caching Headers** - Browser caching support
+- **Lightweight Framework** - Minimal overheadnput Validation** - Comprehensive request validation
+- **SQL Injection Prevention** - Prepared statements
+- **XSS Protection** - Output escaping
+- **Rate Limiting** - IP-based abuse prevention
+- **Environment Variables** - Secure configuration
+- **Error Handling** - Safe error responses0API-mockerjson.xyz-green.svg)](https://mockerjson.xyz)
 
 > **Free Mock Data REST API for Developers** - High-quality, realistic mock data for testing and development
 
@@ -18,7 +31,7 @@ MockerJSON is a free, fast, and reliable REST API providing realistic mock data 
 - 📊 **Pagination Support** - Built-in pagination with metadata
 - 🌐 **CORS Enabled** - Use directly from frontend applications
 - 🆓 **Completely Free** - No API keys or registration required
-- 🚀 **No Rate Limits** (currently) - Use as much as you need
+- ⚡ **Rate Limited** - Fair usage limits (1000 requests/hour)
 
 ## 🚀 Quick Start
 
@@ -104,6 +117,55 @@ fetch("https://mockerjson.xyz/api/v1/posts?limit=3")
 }
 ```
 
+## ⚡ Rate Limiting
+
+MockerJSON implements fair usage rate limiting to ensure optimal performance for all users.
+
+### Rate Limits
+
+- **Hourly Limit**: 1000 requests per hour per IP
+- **Burst Limit**: 50 requests per minute per IP
+- **Localhost**: Unlimited (for development)
+
+### Rate Limit Headers
+
+Every API response includes rate limiting headers:
+
+```http
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 847
+X-RateLimit-Reset: 1753892115
+Retry-After: 45  (only when rate limited)
+```
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Your total hourly request allowance |
+| `X-RateLimit-Remaining` | Number of requests remaining in current window |
+| `X-RateLimit-Reset` | Unix timestamp when your allowance resets |
+| `Retry-After` | Seconds to wait before retrying (when rate limited) |
+
+### Rate Limit Response
+
+When rate limited, you'll receive a `429 Too Many Requests` response:
+
+```json
+{
+  "status": "error",
+  "message": "Rate limit exceeded",
+  "retry_after": 45,
+  "limit": 1000,
+  "window": "1 hour"
+}
+```
+
+### Best Practices
+
+- Monitor the `X-RateLimit-Remaining` header
+- Implement exponential backoff for retries
+- Cache responses when possible
+- Use the `limit` parameter to request only needed data
+
 ## 🏗️ Project Structure
 
 ```
@@ -118,8 +180,11 @@ commercio/
 │   │   ├── Router.php        # URL routing system
 │   │   ├── Requests.php      # Request handling
 │   │   ├── Validator.php     # Input validation
+│   │   ├── RateLimit.php     # Rate limiting system
 │   │   ├── SchemaManager.php # Database schema management
-│   │   └── Middleware/       # Authentication middleware
+│   │   └── Middleware/       # Middleware classes
+│   │       ├── Guest.php     # Guest authentication
+│   │       └── RateLimitMiddleware.php # Rate limiting middleware
 │   ├── Http/
 │   │   └── Controllers/      # API controllers
 │   │       ├── ProductController.php
@@ -147,6 +212,10 @@ commercio/
 ├── routes/
 │   └── api.php              # API route definitions
 ├── storage/                 # Application storage
+│   ├── cache/               # Cache files
+│   │   └── rate_limits/     # Rate limiting cache
+│   ├── logs/                # Application logs
+│   └── framework/           # Framework storage
 ├── tests/                   # Test suite
 │   ├── Feature/             # Feature tests
 │   ├── Unit/                # Unit tests
@@ -309,10 +378,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] GitHub Actions CI/CD
 - [x] Professional API documentation
 - [x] Error handling and validation
+- [x] Rate limiting system
 
 ### Planned 🚧
 
-- [ ] API rate limiting
 - [ ] Authentication system (JWT/OAuth)
 - [ ] Caching layer (Redis/Memcached)
 - [ ] File upload handling

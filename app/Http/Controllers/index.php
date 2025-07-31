@@ -269,7 +269,7 @@
             <p>High-quality, realistic mock data for testing and development</p>
             <div class="status-badges">
                 <span class="badge">✅ Free Forever</span>
-                <span class="badge">🚀 No Rate Limits (Yet)</span>
+                <span class="badge">⚡ Rate Limited (1000/hour)</span>
                 <span class="badge">🔧 No Setup Required</span>
                 <span class="badge">📱 CORS Enabled</span>
             </div>
@@ -341,10 +341,70 @@
                     </div>
                     <div class="feature-card">
                         <h4>🆓 Completely Free</h4>
-                        <p>No API keys, no registration required. Rate limiting may be added in the future to ensure
-                            fair usage.</p>
+                        <p>No API keys, no registration required. Rate limiting is active to ensure fair usage and optimal performance for everyone.</p>
                     </div>
                 </div>
+            </section>
+
+            <!-- Rate Limiting Section -->
+            <section class="section">
+                <h2>⚡ Rate Limiting</h2>
+                <p>Fair usage limits are in place to ensure optimal performance for all users:</p>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h4>🕐 Hourly Limits</h4>
+                        <p><strong>1000 requests per hour</strong> for API endpoints. Perfect for development and testing needs.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🚀 Burst Protection</h4>
+                        <p><strong>50 requests per minute</strong> burst limit prevents abuse while allowing normal usage patterns.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📊 Rate Limit Headers</h4>
+                        <p>Every response includes headers showing your current usage, remaining requests, and reset time.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🏠 Localhost Unlimited</h4>
+                        <p>No limits for localhost development. Test freely on your local machine without restrictions.</p>
+                    </div>
+                </div>
+
+                <h3>Rate Limit Headers</h3>
+                <p>All API responses include these headers to help you manage your usage:</p>
+                
+                <div class="code-title">Response Headers</div>
+                <div class="code-block">X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 847
+X-RateLimit-Reset: 1753892115
+Retry-After: 45  (only when rate limited)</div>
+
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>Header</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>X-RateLimit-Limit</code></td>
+                            <td>Your total hourly request allowance</td>
+                        </tr>
+                        <tr>
+                            <td><code>X-RateLimit-Remaining</code></td>
+                            <td>Number of requests remaining in current window</td>
+                        </tr>
+                        <tr>
+                            <td><code>X-RateLimit-Reset</code></td>
+                            <td>Unix timestamp when your allowance resets</td>
+                        </tr>
+                        <tr>
+                            <td><code>Retry-After</code></td>
+                            <td>Seconds to wait before retrying (when rate limited)</td>
+                        </tr>
+                    </tbody>
+                </table>
             </section>
 
             <!-- API Endpoints Section -->
