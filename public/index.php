@@ -22,6 +22,7 @@ require BASE_PATH . "bootstrap/app.php";
 
 // Get router from container
 $router = App::resolve(Router::class);
+
 require BASE_PATH . "routes/api.php";
 
 $method = $_SERVER["_method"] ?? $_SERVER["REQUEST_METHOD"];

@@ -285,31 +285,40 @@
                 <p>Get started immediately with our RESTful API. No authentication required!</p>
 
                 <div class="code-title">Example Request</div>
-                <div class="code-block">fetch('https://mockerjson.xyz/api/v1/products?limit=5')
-                    .then(response => response.json())
-                    .then(data => console.log(data));</div>
+                <pre class="code-block">
+fetch('https://mockerjson.xyz/api/v1/products?limit=5')
+.then(response => response.json())
+.then(data => console.log(data));
+</pre>
 
                 <div class="code-title">Example Response</div>
-                <div class="code-block">{
-                    "status": "success",
-                    "message": "Products retrieved successfully",
-                    "pagination": {
-                    "total": 119,
-                    "limit": 5,
-                    "offset": 0,
-                    "hasMore": true
-                    },
-                    "data": [
-                    {
-                    "id": 1,
-                    "title": "Wireless Bluetooth Headphones",
-                    "description": "High-quality wireless headphones with noise cancellation",
-                    "price": 99.99,
-                    "image": "https://placehold.co/400x300/3498DB/FFFFFF",
-                    "url": "wireless-bluetooth-headphones"
-                    }
-                    ]
-                    }</div>
+                <pre class="code-block">
+{
+    "version": "1.0.0",
+    "ok": true,
+    "status": "success",
+    "message": "Products retrieved successfully",
+    "pagination": {
+        "total": 119,
+        "limit": 5,
+        "offset": 0,
+        "hasMore": true
+    },
+    "data": [
+        {
+            "id": 1,
+            "title": "Wireless Bluetooth Headphones",
+            "description": "High-quality wireless headphones with noise cancellation",
+            "price": 99.99,
+            "image": "https://placehold.co/400x300/3498DB/FFFFFF",
+            "url": "wireless-bluetooth-headphones"
+        },
+        {
+            //more items
+        }
+
+    ]
+}</pre>
             </section>
 
             <!-- Features Section -->
@@ -369,21 +378,17 @@
                         <p>Every response includes headers showing your current usage, remaining requests, and reset
                             time.</p>
                     </div>
-                    <div class="feature-card">
-                        <h4>🏠 Localhost Unlimited</h4>
-                        <p>No limits for localhost development. Test freely on your local machine without restrictions.
-                        </p>
-                    </div>
                 </div>
 
                 <h3>Rate Limit Headers</h3>
                 <p>All API responses include these headers to help you manage your usage:</p>
 
                 <div class="code-title">Response Headers</div>
-                <div class="code-block">X-RateLimit-Limit: 1000
-                    X-RateLimit-Remaining: 847
-                    X-RateLimit-Reset: 1753892115
-                    Retry-After: 45 (only when rate limited)</div>
+                <pre class="code-block">
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 847
+X-RateLimit-Reset: 1753892115
+Retry-After: 45 (only when rate limited)</pre>
 
                 <table class="params-table">
                     <thead>

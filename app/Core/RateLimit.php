@@ -41,10 +41,15 @@ class RateLimit {
      * Check if request is within rate limits
      */
     public function checkLimit(string $tier = 'default'): array {
+
+        // Clean up expired cache files automatically
+        $this->cleanExpiredCache(); 
+        
         $limits = $this->limits[$tier] ?? $this->limits['default'];
         
         // Check both hourly and burst limits
         $hourlyCheck = $this->checkWindow($limits['requests'], $limits['window'], 'hourly');
+        
         $burstCheck = $this->checkWindow($limits['burst'], 60, 'burst');
         
         // If either limit is exceeded, deny the request

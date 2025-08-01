@@ -4,76 +4,99 @@ namespace Core;
 
 use PDO;
 use Exception;
-
+/**
+ * Class Database
+ *
+ * Handles database connection and basic query execution using PDO.
+ * Provides methods for preparing, executing queries, and inserting data.
+ */
 class Database {
 
+    /**
+     * PDO connection instance.
+     * @var PDO
+     */
     private $connection;
 
-    private $statement; 
+    /**
+     * PDO statement instance.
+     * @var \PDOStatement|null
+     */
+    private $statement;
 
-        
+    /**
+     * Create a new database connection.
+     * @param array $dbconfig
+     * @param string $user
+     * @param string $password
+     * @throws \RuntimeException
+     */
     public function __construct($dbconfig, $user = 'root', $password = '') {
-        
-            $dsn = "mysql:" . http_build_query($dbconfig, "", ";");
-            
-            try {
-
-                $this->connection = new PDO($dsn, $user, $password, [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                ]);
-
-            } catch (Exception $e) {
-
-                throw new \RuntimeException("Database connection failed: " . $e->getMessage(), 500);
-                
-            }        
+        $dsn = "mysql:" . http_build_query($dbconfig, "", ";");
+        try {
+            $this->connection = new PDO($dsn, $user, $password, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+        } catch (Exception $e) {
+            throw new \RuntimeException("Database connection failed: " . $e->getMessage(), 500);
+        }
     }
-    
+
+    /**
+     * Prepare a SQL query.
+     * @param string $query
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
     public function query($query) {
-        
         if (empty($query)) {
             throw new \InvalidArgumentException("Query cannot be empty.", 500);
         }
-
         $this->statement = $this->connection->prepare($query);
-        
-        return $this; 
-    }
-
-    public function execute($param = []) {
-        
-        if (!$this->statement) {
-            throw new \RuntimeException("No query has been executed.", 500);
-        }
-        
-        if (!is_array($param)) {
-            throw new \InvalidArgumentException("Parameters must be an array.", 500);
-        }
-
-        $this->statement->execute($param);
-
         return $this;
     }
 
+    /**
+     * Execute the prepared statement with parameters.
+     * @param array $param
+     * @return $this
+     * @throws \RuntimeException|\InvalidArgumentException
+     */
+    public function execute($param = []) {
+        if (!$this->statement) {
+            throw new \RuntimeException("No query has been executed.", 500);
+        }
+        if (!is_array($param)) {
+            throw new \InvalidArgumentException("Parameters must be an array.", 500);
+        }
+        $this->statement->execute($param);
+        return $this;
+    }
 
+    /**
+     * Insert data into a table.
+     * @param string $table
+     * @param array $data
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
     public function insert(string $table, array $data): self {
-
         if (empty($table) || empty($data)) {
             throw new \InvalidArgumentException("Table name and data cannot be empty.");
         }
-
         $columns = implode(", ", array_keys($data));
         $placeholders = ":" . implode(", :", array_keys($data));
-        
         $sql = "INSERT INTO `{$table}` ({$columns}) VALUES ({$placeholders})";
-        
         return $this->query($sql)->execute($data);
     }
-    
 
+    /**
+     * Fetch all results from the last executed query.
+     * @return array
+     * @throws \RuntimeException
+     */
     public function findAll() {
-
         if (!$this->statement) {
             throw new \RuntimeException("No query has been executed.", 500);
         }

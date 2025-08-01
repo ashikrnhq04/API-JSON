@@ -1,16 +1,25 @@
-<?php 
-
+<?php
 namespace Core;
 
 use Views\JsonView;
-
+/**
+ * Class Mimic
+ *
+ * Generates mock responses for posts and products, mainly for testing or production stubs.
+ */
 class Mimic {
+    /**
+     * Send a success response using JsonView.
+     * @param string $message
+     */
     public static function success($message = 'Success'): void {
         JsonView::success(null, $message);
     }
-    
+
     /**
-     * Generate mock post response for production environment
+     * Generate mock post response for production environment.
+     * @param array $input
+     * @return array
      */
     public static function generateMockPost(array $input): array {
         return [
@@ -25,9 +34,11 @@ class Mimic {
             'updated_at' => date('Y-m-d H:i:s')
         ];
     }
-    
+
     /**
-     * Generate mock product response for production environment
+     * Generate mock product response for production environment.
+     * @param array $input
+     * @return array
      */
     public static function generateMockProduct(array $input): array {
         return [
@@ -43,23 +54,22 @@ class Mimic {
             'updated_at' => date('Y-m-d H:i:s')
         ];
     }
-    
+
     /**
-     * Parse categories for mock response
+     * Parse categories for mock response.
+     * @param string|array $categories
+     * @return array
      */
     private static function parseCategoriesForMock($categories): array {
         if (empty($categories)) {
             return [];
         }
-        
         if (is_string($categories)) {
             return array_filter(array_map('trim', explode(',', $categories)));
         }
-        
         if (is_array($categories)) {
             return array_filter($categories);
         }
-        
         return [];
     }
 }
