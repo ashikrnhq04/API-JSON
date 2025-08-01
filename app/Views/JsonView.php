@@ -4,15 +4,30 @@ namespace Views;
 
 class JsonView {
     
-
     private static string $version = '1.3.2'; // Updated version
+    
+    /**
+     * Set CORS headers for all responses
+     */
+    private static function setCorsHeaders(): void {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Max-Age: 3600');
+        
+        // Handle preflight OPTIONS requests
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit();
+        }
+    }
     /**
      * Send success response
      */
     public static function success($data = null, string $message = 'Success', int $statusCode = 200): void {
+        self::setCorsHeaders();
         http_response_code($statusCode);
         header('Content-Type: application/json');
-        header('Access-Control-Allow-Origin: *');
         
         echo json_encode([
             'version' => static::$version,
@@ -27,9 +42,9 @@ class JsonView {
      * Send error response  
      */
     public static function error(string $message = 'Error', int $statusCode = 500, array $errors = []): void {
+        self::setCorsHeaders();
         http_response_code($statusCode);
         header('Content-Type: application/json');
-        header('Access-Control-Allow-Origin: *');
         
         echo json_encode([
             'version' => static::$version,
@@ -51,9 +66,9 @@ class JsonView {
      * Send not found response
      */
     public static function notFound(string $message = 'Resource not found'): void {
+        self::setCorsHeaders();
         http_response_code(200);
         header('Content-Type: application/json');
-        header('Access-Control-Allow-Origin: *');
         
         echo json_encode([
             'version' => static::$version,
@@ -68,9 +83,9 @@ class JsonView {
      * Send rate limited response
      */
     public static function rateLimited(string $message = 'Rate limit exceeded', array $rateInfo = []): void {
+        self::setCorsHeaders();
         http_response_code(429);
         header('Content-Type: application/json');
-        header('Access-Control-Allow-Origin: *');
         
         $response = [
             'version' => static::$version,
@@ -96,9 +111,9 @@ class JsonView {
      * Send success response with pagination
      */
     public static function successWithPagination($data, array $pagination = [], string $message = 'Success'): void {
+        self::setCorsHeaders();
         http_response_code(200);
         header('Content-Type: application/json');
-        header('Access-Control-Allow-Origin: *');
         
         echo json_encode([
             'version' => static::$version,

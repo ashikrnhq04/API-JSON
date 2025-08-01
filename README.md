@@ -125,12 +125,12 @@ X-RateLimit-Reset: 1753892115
 Retry-After: 45  (only when rate limited)
 ```
 
-| Header | Description |
-|--------|-------------|
-| `X-RateLimit-Limit` | Your total hourly request allowance |
-| `X-RateLimit-Remaining` | Number of requests remaining in current window |
-| `X-RateLimit-Reset` | Unix timestamp when your allowance resets |
-| `Retry-After` | Seconds to wait before retrying (when rate limited) |
+| Header                  | Description                                         |
+| ----------------------- | --------------------------------------------------- |
+| `X-RateLimit-Limit`     | Your total hourly request allowance                 |
+| `X-RateLimit-Remaining` | Number of requests remaining in current window      |
+| `X-RateLimit-Reset`     | Unix timestamp when your allowance resets           |
+| `Retry-After`           | Seconds to wait before retrying (when rate limited) |
 
 ### Rate Limit Response
 

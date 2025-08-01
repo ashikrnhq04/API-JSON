@@ -1,7 +1,5 @@
 <?php 
 
-session_start();
-
 use Core\Router; 
 use Core\Database; 
 use Core\App;
@@ -12,11 +10,8 @@ const BASE_PATH = __DIR__ . "/../";
 require BASE_PATH . "app/helpers/functions.php";
 require BASE_PATH . "vendor/autoload.php";
 
-$_SESSION = [
-    "access" => "guest"
-];
 
-// Load environment variables (optional)
+// Load environment variables 
 if (file_exists(BASE_PATH . '.env')) {
     $dotenv = Dotenv::createImmutable(BASE_PATH);
     $dotenv->load();

@@ -10,7 +10,16 @@ RewriteRule ^\.env$ - [F,L]
 RewriteRule ^composer\.(json|lock)$ - [F,L]
 RewriteRule ^(vendor|app|bootstrap|config|storage|tests)/.*$ - [F,L]
 
-# Route everything through public/index.php
+# Handle static files from public directory BEFORE routing to PHP
+RewriteRule ^favicon\.ico$ public/favicon.ico [L]
+RewriteRule ^robots\.txt$ public/robots.txt [L]
+RewriteRule ^sitemap\.xml$ public/sitemap.xml [L]
+RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+RewriteRule ^css/(.*)$ public/css/$1 [L]
+RewriteRule ^js/(.*)$ public/js/$1 [L]
+RewriteRule ^images/(.*)$ public/images/$1 [L]
+
+# Route everything else through public/index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ public/index.php [QSA,L]
