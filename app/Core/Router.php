@@ -134,6 +134,7 @@ class Router {
         // to handle dynamic URL
         foreach ($this->routes as $route) {
 
+
             $pattern = extractDynamicURIPattern($route['uri']);
             if (preg_match($pattern, $uri, $matches) && $route['method'] === strtoupper($method)) {
 

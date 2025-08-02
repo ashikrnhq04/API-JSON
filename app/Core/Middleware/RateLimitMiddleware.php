@@ -12,7 +12,9 @@ class RateLimitMiddleware {
      */
     public static function handle(string $tier = 'api'): void {
         $rateLimit = new RateLimit();
-        
+        // Always clean expired cache files, even for whitelisted IPs
+        $rateLimit->cleanExpiredCache();
+
         // Skip rate limiting for whitelisted IPs
         if ($rateLimit->isWhitelisted()) {
             // Still add headers for whitelisted IPs to show they're not rate limited
@@ -21,12 +23,12 @@ class RateLimitMiddleware {
             header('X-RateLimit-Reset: 0');
             return;
         }
-        
+
         $result = $rateLimit->checkLimit($tier);
-        
+
         // Add rate limit headers
         self::addRateLimitHeaders($result);
-        
+
         // If rate limit exceeded, return error
         if (!$result['allowed']) {
             http_response_code(429);

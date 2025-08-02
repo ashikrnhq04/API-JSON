@@ -125,6 +125,9 @@ class Validator
             case 'boolean':
                 $this->validateBoolean($field, $value);
                 break;
+            case 'array':
+                $this->validateArray($field, $value);
+                break;
             default:
                 if (str_starts_with($rule, 'max:')) {
                     $this->validateMax($field, $value, $rule);
@@ -188,6 +191,19 @@ class Validator
             }
         } elseif (is_numeric($value) && $value > $max) {
             $this->addError($field, "{$field} must not be greater than {$max}.");
+        }
+    }
+
+    public function validateArray(string $field, $value): void
+    {
+        if (!is_array($value)) {
+            $this->addError($field, "{$field} must be an array.");
+        } else {
+            foreach ($value as $item) {
+                if (!is_string($item)) {
+                    $this->addError($field, "Each item in {$field} must be a string.");
+                }
+            }
         }
     }
 
