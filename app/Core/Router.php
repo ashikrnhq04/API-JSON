@@ -107,6 +107,10 @@ class Router {
         if($uri !== "/"){
             $uri = preg_replace("#/$#", "", $uri);
         }
+
+        // Normalize URI to remove multiple slashes
+        $uri = preg_replace("#/+#", "/", $uri);
+
         // handle static URL
         $matchedStatic = false;
         foreach ($this->routes as $route) {

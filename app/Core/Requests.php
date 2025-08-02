@@ -35,13 +35,13 @@ class Requests {
             if(empty($input) || !is_array($input)) {
                 throw new \InvalidArgumentException("Input data must be a non-empty array.", 400);
             }
+            self::$data = array_map('h', $input);
         } catch (\Exception $e) {
             abort(400, [
-                "message" => "Invalid input data format.",
+                "message" => "Invalid input data format. " . $e->getMessage(),
                 "serverError" => $e
             ]);
         }
-        self::$data = array_map('h', $input);
     }
 
     /**

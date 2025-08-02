@@ -40,6 +40,10 @@ if (!function_exists('extractDynamicURIPattern')) {
 
 if (!function_exists('h')) {
     function h($str) {
+        // check type string or throw error
+        if (!is_string($str)) {
+            throw new \InvalidArgumentException("Expected string, got " . gettype($str), 500);
+        }
         return htmlspecialchars(trim($str ?? ""));
     }
 }

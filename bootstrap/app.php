@@ -9,13 +9,14 @@ $container = new Container();
 
 $container->bind("Core\Database", function() {
     
-    $dbconfig = require BASE_PATH . "config/database.php";
-    if (!isset($dbconfig["database"])) {
+    $config = require BASE_PATH . "config/database.php";
+
+    if (!isset($config["database"])) {
         throw new \RuntimeException("Database configuration not found.", 500);
     }
     
-    $config = $dbconfig["database"];
-    return new Database($config, $config["username"], $config["password"]);
+    $dbconfig = $config["database"];
+    return new Database($dbconfig, $dbconfig["username"], $dbconfig["password"]);
             
 });
 
