@@ -57,7 +57,7 @@ class PostController {
      */
     public function show(int $id): void {
         try {
-            $post = $this->postModel->findById($id);
+            $post = $this->postModel->findBySlugOrId($id);
             
             if (!$post) {
                 JsonView::notFound('No post found with the specified ID');
@@ -77,7 +77,7 @@ class PostController {
      */
     public function showBySlug(string $slug): void {
         try {
-            $post = $this->postModel->findBySlug($slug);
+            $post = $this->postModel->findBySlugOrId($slug);
             
             if (!$post) {
                 JsonView::notFound('No post found with the specified identifier');
@@ -97,7 +97,9 @@ class PostController {
      */
     public function create(): void {
         try {
-            $input = Requests::all();
+            $input = Requests::only([
+                'title', 'content', 'image', 'categories'
+            ]);
 
             if (!$input) {
                 JsonView::validationError(['input' => 'Invalid JSON data']);
@@ -144,18 +146,20 @@ class PostController {
      */
     public function patchUpdate(string $identifier): void {
         try {
-            $existingPost = $this->postModel->findBySlug($identifier);
+            $existingPost = $this->postModel->findBySlugOrId($identifier);
             if (!$existingPost) {
                 JsonView::notFound('No post found with the specified identifier');
                 return;
             }
             
-            $input = Requests::all();
+            $input = Requests::only([
+                'title', 'content', 'image', 'categories'
+            ]);
 
             // Validate fields (optional for PATCH)
             Requests::validate([
-                'title' => 'string|min:2|max:255',
-                'content' => 'string|min:5|max:10000',
+                'title' => 'string|min:2|max:10',
+                'content' => 'string|min:10',
                 'image' => 'url',
                 'categories' => 'string',
             ]);
@@ -173,10 +177,10 @@ class PostController {
             }
 
             // Update the post using the model
-            $result = $this->postModel->update($existingPost['id'], $input);
+            $result = $this->postModel->update($existingPost['id'], $input); 
             
             if ($result) {
-                $updatedPost = $this->postModel->findById($existingPost['id']);
+                $updatedPost = $this->postModel->findBySlugOrId($existingPost['id']);
                 JsonView::success($updatedPost, 'Post updated successfully');
             } else {
                 JsonView::error('Failed to update post', 500);
@@ -193,18 +197,20 @@ class PostController {
      */
     public function putUpdate(string $identifier): void {
         try {
-            $existingPost = $this->postModel->findBySlug($identifier);
+            $existingPost = $this->postModel->findBySlugOrId($identifier);
             if (!$existingPost) {
                 JsonView::notFound('No post found with the specified identifier');
                 return;
             }
             
-            $input = Requests::all();
+            $input = Requests::only([
+                'title', 'content', 'image', 'categories'
+            ]);
 
             // Validate required fields (all required for PUT)
             Requests::validate([
-                'title' => 'required|string|min:2|max:255',
-                'content' => 'required|string|min:5|max:10000',
+                'title' => 'required|string|min:2|max:10',
+                'content' => 'required|string|min:10',
                 'image' => 'required|url',
                 'categories' => 'string',
             ]);
@@ -225,7 +231,7 @@ class PostController {
             $result = $this->postModel->update($existingPost['id'], $input);
             
             if ($result) {
-                $updatedPost = $this->postModel->findById($existingPost['id']);
+                $updatedPost = $this->postModel->findBySlugOrId($existingPost['id']);
                 JsonView::success($updatedPost, 'Post updated successfully');
             } else {
                 JsonView::error('Failed to update post', 500);
@@ -242,7 +248,7 @@ class PostController {
      */
     public function destroyBySlug(string $identifier): void {
         try {
-            $existingPost = $this->postModel->findBySlug($identifier);
+            $existingPost = $this->postModel->findBySlugOrId($identifier);
             if (!$existingPost) {
                 JsonView::notFound('No post found with the specified identifier');
                 return;

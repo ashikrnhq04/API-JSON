@@ -9,7 +9,7 @@ $container = new Container();
 
 $container->bind("Core\Database", function() {
     
-    $config = require BASE_PATH . "config/database.php";
+    $config = require BASE_PATH . "config/config.php";
 
     if (!isset($config["database"])) {
         throw new \RuntimeException("Database configuration not found.", 500);

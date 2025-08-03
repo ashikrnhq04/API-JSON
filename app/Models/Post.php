@@ -43,7 +43,7 @@ class Post {
             
             return [
                 'success' => true,
-                'post' => $this->findById($postId)
+                'post' => $this->findBySlugOrId($postId)
             ];
             
         } catch (\Exception $e) {
@@ -52,29 +52,21 @@ class Post {
         }
     }
     
-    /**
-     * Find post by ID
-     */
-    public function findById(int $id): ?array {
-        $post = $this->db->find('posts', (string)$id);
-        
-        if (!$post) {
-            return null;
-        }
-        
-        $post['categories'] = $this->getPostCategories($id);
-        return $post;
-    }
+    
     
     /**
      * Find post by slug
      */
-    public function findBySlug(string $slug): ?array {
-        $post = $this->db->find('posts', $slug);
-        
+    public function findBySlugOrId(string $slug): ?array {
+
+        $column = ctype_digit($slug) ? "id" : "url";
+
+        $post = $this->db->query("SELECT * FROM posts WHERE {$column} = :{$column}")->execute([$column => $slug])->find();
+
         if (!$post) {
             return null;
         }
+
         
         $post['categories'] = $this->getPostCategories($post['id']);
         return $post;

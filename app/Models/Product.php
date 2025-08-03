@@ -44,7 +44,7 @@ class Product {
             
             return [
                 'success' => true,
-                'product' => $this->findById($productId)
+                'product' => $this->findBySlugOrId($productId)
             ];
             
         } catch (\Exception $e) {
@@ -54,24 +54,13 @@ class Product {
     }
     
     /**
-     * Find product by ID
-     */
-    public function findById(int $id): ?array {
-        $product = $this->db->find('products', (string)$id);
-        
-        if (!$product) {
-            return null;
-        }
-        
-        $product['categories'] = $this->getProductCategories($id);
-        return $product;
-    }
-    
-    /**
      * Find product by slug
      */
-    public function findBySlug(string $slug): ?array {
-        $product = $this->db->find('products', $slug);
+    public function findBySlugOrId(string $slug): ?array {
+
+        $column = ctype_digit($slug) ? "id" : "url";
+
+        $product = $this->db->query("SELECT * FROM products WHERE {$column} = :{$column}")->execute([$column => $slug])->find();
         
         if (!$product) {
             return null;

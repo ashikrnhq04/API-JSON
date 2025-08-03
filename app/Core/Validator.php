@@ -58,17 +58,22 @@ class Validator
     protected function validateField(string $field, $value, array $rules): void
     {
         $isRequired = in_array('required', $rules);
+
         // Check required first
         if (!$this->validateRequired($field, $value, $isRequired)) {
             return; // Skip further validation if required fails
         }
-        // If not required and value is empty, skip type checks
-        if (!$isRequired && $this->isEmpty($value)) {
+
+        // If field is not required and not set in data, skip all validation
+        if (!$isRequired && !array_key_exists($field, $this->data)) {
             return;
         }
-        // Validate each rule
+
+        // If field is present (even if empty), apply all non-required rules
         foreach ($rules as $rule) {
-            $this->applyRule($field, $value, $rule);
+            if ($rule !== 'required') {
+                $this->applyRule($field, $value, $rule);
+            }
         }
     }
 
@@ -81,7 +86,7 @@ class Validator
      */
     protected function validateRequired(string $field, $value, bool $isRequired): bool
     {
-        if ($isRequired && $this->isEmpty(h($value))) {
+        if ($isRequired && $this->isEmpty(trim($value))) {
             $this->addError($field, "{$field} is required.");
             return false;
         }

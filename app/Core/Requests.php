@@ -33,7 +33,7 @@ class Requests {
             : $_POST;
         try {
             if(empty($input) || !is_array($input)) {
-                throw new \InvalidArgumentException("Input data must be a non-empty array.", 400);
+                throw new \InvalidArgumentException("Input data must be a valid JSON or non-empty array.", 400);
             }
             self::$data = array_map('h', $input);
         } catch (\Exception $e) {

@@ -57,7 +57,7 @@ class ProductController {
      */
     public function show(int $id): void {
         try {
-            $product = $this->productModel->findById($id);
+            $product = $this->productModel->findBySlugOrId($id);
             
             if (!$product) {
                 JsonView::notFound('No product found with the specified ID');
@@ -77,7 +77,7 @@ class ProductController {
      */
     public function showBySlug(string $slug): void {
         try {
-            $product = $this->productModel->findBySlug($slug);
+            $product = $this->productModel->findBySlugOrId($slug);
             
             if (!$product) {
                 JsonView::notFound('No product found with the specified identifier');
@@ -97,7 +97,9 @@ class ProductController {
      */
     public function create(): void {
         try {
-            $input = Requests::all();
+            $input = Requests::only([
+                'title', 'description', 'price', 'image', 'categories'
+            ]);
 
             if (!$input) {
                 JsonView::validationError(['input' => 'Invalid JSON data']);
@@ -145,18 +147,20 @@ class ProductController {
      */
     public function patchUpdate(string $identifier): void {
         try {
-            $existingProduct = $this->productModel->findBySlug($identifier);
+            $existingProduct = $this->productModel->findBySlugOrId($identifier);
             if (!$existingProduct) {
                 JsonView::notFound('No product found with the specified identifier');
                 return;
             }
             
-            $input = Requests::all();
+            $input = Requests::only([
+                'title', 'description', 'price', 'image', 'categories'
+            ]);
 
             // Validate fields (optional for PATCH)
             Requests::validate([
-                'title' => 'string|min:2|max:255',
-                'description' => 'string|min:5|max:2000',
+                'title' => 'string|min:2|max:10',
+                'description' => 'string|min:10',
                 'price' => 'number',
                 'image' => 'url',
                 'categories' => 'string',
@@ -178,7 +182,7 @@ class ProductController {
             $result = $this->productModel->update($existingProduct['id'], $input);
             
             if ($result) {
-                $updatedProduct = $this->productModel->findById($existingProduct['id']);
+                $updatedProduct = $this->productModel->findBySlugOrId($existingProduct['id']);
                 JsonView::success($updatedProduct, 'Product updated successfully');
             } else {
                 JsonView::error('Failed to update product', 500);
@@ -195,13 +199,15 @@ class ProductController {
      */
     public function putUpdate(string $identifier): void {
         try {
-            $existingProduct = $this->productModel->findBySlug($identifier);
+            $existingProduct = $this->productModel->findBySlugOrId($identifier);
             if (!$existingProduct) {
                 JsonView::notFound('No product found with the specified identifier');
                 return;
             }
             
-            $input = Requests::all();
+            $input = Requests::only([
+                'title', 'description', 'price', 'image', 'categories'
+            ]);
 
             // Validate required fields (all required for PUT)
             Requests::validate([
@@ -228,7 +234,7 @@ class ProductController {
             $result = $this->productModel->update($existingProduct['id'], $input);
             
             if ($result) {
-                $updatedProduct = $this->productModel->findById($existingProduct['id']);
+                $updatedProduct = $this->productModel->findBySlugOrId($existingProduct['id']);
                 JsonView::success($updatedProduct, 'Product updated successfully');
             } else {
                 JsonView::error('Failed to update product', 500);
@@ -245,7 +251,7 @@ class ProductController {
      */
     public function destroyBySlug(string $identifier): void {
         try {
-            $existingProduct = $this->productModel->findBySlug($identifier);
+            $existingProduct = $this->productModel->findBySlugOrId($identifier);
             if (!$existingProduct) {
                 JsonView::notFound('No product found with the specified identifier');
                 return;

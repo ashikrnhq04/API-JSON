@@ -65,7 +65,7 @@ class Mimic {
             return [];
         }
         if (is_string($categories)) {
-            return array_filter(array_map('trim', explode(',', $categories)));
+            return array_filter(array_map('h', explode(',', $categories)));
         }
         if (is_array($categories)) {
             return array_filter($categories);

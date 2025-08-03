@@ -32,7 +32,17 @@ class Database {
      * @throws \RuntimeException
      */
     public function __construct($dbconfig, $user = 'root', $password = '') {
-        $dsn = "mysql:" . http_build_query($dbconfig, "", ";");
+        
+        // build DSN from config
+        $dsn = "mysql:" . http_build_query(
+            array_intersect_key($dbconfig, 
+            array_flip(["dbname", "host", "port", "charset"])
+        ), "", ";");
+
+        if (empty($dsn)) {
+            throw new \InvalidArgumentException("Database DSN cannot be empty.", 500);
+        }
+
         try {
             $this->connection = new PDO($dsn, $user, $password, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -87,7 +97,9 @@ class Database {
         }
         $columns = implode(", ", array_keys($data));
         $placeholders = ":" . implode(", :", array_keys($data));
+
         $sql = "INSERT INTO `{$table}` ({$columns}) VALUES ({$placeholders})";
+        
         return $this->query($sql)->execute($data);
     }
 
@@ -97,6 +109,7 @@ class Database {
      * @throws \RuntimeException
      */
     public function findAll() {
+
         if (!$this->statement) {
             throw new \RuntimeException("No query has been executed.", 500);
         }
@@ -116,19 +129,24 @@ class Database {
     }
 
     // find a single record with id or slug
-    public function find(string $table, string $identifier): array | bool {
-        if (empty($table) || empty($identifier)) {
-            throw new \InvalidArgumentException("Table and identifier cannot be empty.");
+    public function find(): array | bool {
+        
+          if (!$this->statement) {
+            throw new \RuntimeException("No query has been executed.", 500);
         }
 
-        // Determine if identifier is numeric (ID) or name
-        $column = ctype_digit($identifier) ? "id" : "url";
-        
-        $sql = "SELECT * FROM `{$table}` WHERE `{$column}` = :{$column} LIMIT 1";
-        
-        $this->query($sql)->execute([$column => $identifier]);
-        
-        return $this->fetch();
+        // Check if the statement is prepared
+        if (!$this->statement instanceof \PDOStatement) {
+            throw new \RuntimeException("Query has not been prepared.", 500);
+        }
+
+        // Check if the statement is executed
+        if (!$this->statement->execute()) {
+            throw new \RuntimeException("Query execution failed.", 500);
+        }
+
+        return $this->statement->fetch() ?? null;
+
     }
 
     public function select(string $table, array $columns = ["*"], array $conditions = []): array {
