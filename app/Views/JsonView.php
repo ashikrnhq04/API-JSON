@@ -47,11 +47,9 @@ class JsonView {
         header('Content-Type: application/json');
         
         echo json_encode([
-            'version' => static::$version,
-            'status' => 'error',
+            "status" => 'error',
             'ok' => false,
             'message' => $message,
-            'errors' => $errors
         ]);
     }
     

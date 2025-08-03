@@ -166,7 +166,7 @@ class Router {
     }
 
     public function abort($status = 404) {
-        JSON::error($status);        
+        JSON::error("Not found", $status);        
         die();
     }
 
