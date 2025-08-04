@@ -38,7 +38,7 @@ abstract class TestCase extends BaseTestCase
         $container = new Container();
         
         $container->bind("Core\Database", function() {
-            $dbconfig = require BASE_PATH . "config/database.php";
+            $dbconfig = require BASE_PATH . "config/config.php";
             if (!isset($dbconfig["database"])) {
                 throw new \RuntimeException("Database configuration not found.", 500);
             }

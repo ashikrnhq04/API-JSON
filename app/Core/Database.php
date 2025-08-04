@@ -103,51 +103,7 @@ class Database {
         return $this->query($sql)->execute($data);
     }
 
-    /**
-     * Fetch all results from the last executed query.
-     * @return array
-     * @throws \RuntimeException
-     */
-    public function findAll() {
-
-        if (!$this->statement) {
-            throw new \RuntimeException("No query has been executed.", 500);
-        }
-
-        // Check if the statement is prepared
-        if (!$this->statement instanceof \PDOStatement) {
-            throw new \RuntimeException("Query has not been prepared.", 500);
-        }
-
-        // Check if the statement is executed
-        if (!$this->statement->execute()) {
-            throw new \RuntimeException("Query execution failed.", 500);
-        }
-
-        // Fetch all results
-        return $this->statement->fetchAll() ?? null;
-    }
-
-    // find a single record with id or slug
-    public function find(): array | bool {
-        
-          if (!$this->statement) {
-            throw new \RuntimeException("No query has been executed.", 500);
-        }
-
-        // Check if the statement is prepared
-        if (!$this->statement instanceof \PDOStatement) {
-            throw new \RuntimeException("Query has not been prepared.", 500);
-        }
-
-        // Check if the statement is executed
-        if (!$this->statement->execute()) {
-            throw new \RuntimeException("Query execution failed.", 500);
-        }
-
-        return $this->statement->fetch() ?? null;
-
-    }
+    
 
     public function select(string $table, array $columns = ["*"], array $conditions = []): array {
         

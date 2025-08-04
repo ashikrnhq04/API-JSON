@@ -33,7 +33,9 @@ describe('Database Class', function () {
     });
 
     it('can find a single record by ID', function () {
-        $result = $this->db->find("products", "1");
+        $result = $this->db->query("SELECT * FROM products where id = :id")->execute([
+            "id" => 1
+        ])->find();
         
         if ($result) {
             expect($result)->toBeArray()
@@ -45,7 +47,9 @@ describe('Database Class', function () {
     });
 
     it('can find a single record by slug', function () {
-        $result = $this->db->find("products", "plant-pot");
+        $result  = $this->db->query("SELECT * FROM products WHERE url = :url")->execute([
+            "url" => "plant-pot"
+        ])->find();
         
         if ($result) {
             expect($result)->toBeArray()
@@ -119,7 +123,9 @@ describe('Database Class', function () {
         ]);
         
         // Find the created product
-        $created = $this->db->find("products", $uniqueUrl);
+        $created = $this->db->query("SELECT * FROM product WHERE url = :url")->execute([
+            "url" => $uniqueUrl
+        ])->find();
         
         if ($created) {
             // Use direct query since there's no delete method
@@ -152,15 +158,5 @@ describe('Database Class', function () {
         // Should return empty array, not cause SQL injection
         expect($result)->toBeArray()
             ->and($result)->toBeEmpty();
-    });
-
-    it('validates input parameters', function () {
-        expect(function() {
-            $this->db->find("", "test");
-        })->toThrow(\InvalidArgumentException::class);
-        
-        expect(function() {
-            $this->db->find("products", "");
-        })->toThrow(\InvalidArgumentException::class);
     });
 });

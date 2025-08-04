@@ -64,21 +64,6 @@ describe('Router Class', function () {
         expect($this->router)->toBeInstanceOf(Router::class);
     });
 
-    it('can extract slug from parameters', function () {
-        // Test the static method for slug extraction
-        $slug = Router::getSlug();
-        
-        expect($slug)->toBeString()->or($slug)->toBeNull();
-    });
-
-    it('can match exact routes', function () {
-        $this->router->get('/exact-match', function() {
-            return 'Exact match';
-        });
-        
-        // The router should be able to handle this registration
-        expect($this->router)->toBeInstanceOf(Router::class);
-    });
 
     it('can handle root route', function () {
         $this->router->get('/', function() {

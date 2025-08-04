@@ -61,7 +61,7 @@ class Post {
 
         $column = ctype_digit($slug) ? "id" : "url";
 
-        $post = $this->db->query("SELECT * FROM posts WHERE {$column} = :{$column}")->execute([$column => $slug])->find();
+        $post = $this->db->query("SELECT * FROM posts WHERE {$column} = :{$column}")->execute([$column => $slug])->fetch();
 
         if (!$post) {
             return null;

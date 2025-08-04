@@ -60,7 +60,7 @@ class Product {
 
         $column = ctype_digit($slug) ? "id" : "url";
 
-        $product = $this->db->query("SELECT * FROM products WHERE {$column} = :{$column}")->execute([$column => $slug])->find();
+        $product = $this->db->query("SELECT * FROM products WHERE {$column} = :{$column}")->execute([$column => $slug])->fetch();
         
         if (!$product) {
             return null;
