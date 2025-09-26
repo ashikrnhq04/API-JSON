@@ -492,8 +492,10 @@ Retry-After: 45 (only when rate limited)</pre>
             <footer class="footer">
                 <div class="container">
                     <p>MockerJSON API is a free service for developers</p>
-                    <p>Built with <span style="color: red">&#10084;</span> by <a
-                            href="mailto:ashikrn.hq04@gmail.com">Ashik</a></p>
+                    <p>Built with <span style="color: red">&#10084;</span>
+                        <!--by <a
+                            href="mailto:ashikrn.hq04@gmail.com">Ashik</a>-->
+                    </p>
                 </div>
             </footer>
 </body>
